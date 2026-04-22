@@ -1,0 +1,118 @@
+name: Build HA DeskLink macOS
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Publish ARM64
+        run: |
+          dotnet publish src/HaDeskLink -c Release -r osx-arm64 --self-contained -o publish-arm64
+
+      - name: Publish x64
+        run: |
+          dotnet publish src/HaDeskLink -c Release -r osx-x64 --self-contained -o publish-x64
+
+      - name: Create ARM64 archive
+        run: |
+          cd publish-arm64
+          zip -r ../HA_DeskLink_macOS_ARM64_${{ steps.version.outputs.VERSION }}.zip .
+          cd ..
+
+      - name: Create x64 archive
+        run: |
+          cd publish-x64
+          zip -r ../HA_DeskLink_macOS_x64_${{ steps.version.outputs.VERSION }}.zip .
+          cd ..
+
+      - name: Upload ARM64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HA-DeskLink-macOS-ARM64
+          path: HA_DeskLink_macOS_ARM64_${{ steps.version.outputs.VERSION }}.zip
+
+      - name: Upload x64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HA-DeskLink-macOS-x64
+          path: HA_DeskLink_macOS_x64_${{ steps.version.outputs.VERSION }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Download ARM64
+        uses: actions/download-artifact@v4
+        with:
+          name: HA-DeskLink-macOS-ARM64
+          path: dist/
+
+      - name: Download x64
+        uses: actions/download-artifact@v4
+        with:
+          name: HA-DeskLink-macOS-x64
+          path: dist/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          files: dist/*.zip
+          body: |
+            HA DeskLink macOS v${{ steps.version.outputs.VERSION }}
+
+            ⚠️ **COMMUNITY TEST VERSION – NICHT VOM ENTWICKLER GETESTET!** ⚠️
+
+            Diese Version wurde ohne Mac-Hardware erstellt und ist auf Community-Testing angewiesen.
+            Bitte melde Bugs unter [Issues](https://github.com/TechFlipsi/ha-desklink-mac/issues).
+
+            ## Installation
+            1. ZIP herunterladen (ARM64 für M-Chips, x64 für Intel)
+            2. Entpacken
+            3. `HA_DeskLink` starten
+
+            ## Features
+            - CPU-Temperatur & Auslastung, RAM, Akku, Festplatte
+            - Vollbild-Sensor, Monitor-Layout, Helligkeit
+            - Mehrsprachigkeit (de, en, es, fr, zh, ja)
+            - HA Token verschlüsselt (Keychain + AES-GCM)
+            - Dashboard öffnet HA im Browser
+            - Push-Benachrichtigungen via WebSocket
+          generate_release_notes: false
+
+      - name: Discord Release Notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          curl -s -X POST -H "Content-Type: application/json" "$DISCORD_WEBHOOK" \
+            -d "{\"username\":\"HA DeskLink Release\",\"embeds\":[{\"title\":\"🍎 HA DeskLink macOS v${VERSION}\",\"color\":16750848,\"description\":\"⚠️ COMMUNITY TEST VERSION – Nicht vom Entwickler getestet!\",\"fields\":[{\"name\":\"📦 Download\",\"value\":\"[GitHub Release](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)\"},{\"name\":\"💬 Discord\",\"value\":\"[Join Server](https://discord.gg/HnCZY54U7)\"}]}]}"
