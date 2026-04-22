@@ -54,11 +54,11 @@ Wenn du macOS nutzt, teste bitte diese Version und melde Bugs – **die Communit
 | IP-Adresse | `ip_address` | – | ✅ | |
 | WiFi-Name | `wifi_ssid` | – | ✅ | |
 | Tastaturbeleuchtung | `keyboard_backlight` | % | ⚠️ | 🍎 macOS-exklusiv, nicht auf allen Macs |
-| Vollbild-App | `fullscreen_app` | – | ✅ | |
 | Vollbild | `fullscreen` | – | ✅ | |
 | Monitor-Layout | `monitor_layout` | – | ✅ | |
 | Helligkeit | `brightness` | % | ✅ | |
 | Webcam aktiv | `webcam_active` | – | ✅ | on/off |
+| App-Version | `ha_desklink_version` | – | ✅ | Aktuelle Version |
 
 ### CPU-Temperatur – Erklärung
 
