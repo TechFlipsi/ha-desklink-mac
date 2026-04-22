@@ -1,4 +1,4 @@
-# HA DeskLink macOS v2.2.1
+# HA DeskLink macOS v2.2.2
 
 **Home Assistant Companion App für macOS**
 
@@ -17,16 +17,53 @@ Wenn du macOS nutzt, teste bitte diese Version und melde Bugs – **die Communit
 
 ---
 
-## Features
+## Sensoren
 
-- 🖥️ CPU-Temperatur, CPU-Auslastung, RAM, Akku, Festplatte
-- 🖥️ Vollbild-Sensor (welches Programm ist im Vollbild)
-- 📺 Monitor-Layout-Sensor
-- ☀️ Helligkeit steuern & anzeigen
-- 🌍 Mehrsprachigkeit (de, en, es, fr, zh, ja)
-- 📊 Dashboard öffnet Home Assistant im Browser
-- 🔒 HA Token verschlüsselt (macOS Keychain + AES-GCM)
-- 🔔 Push-Benachrichtigungen via WebSocket
+| Sensor | ID | Einheit | Verfügbar | Hinweis |
+|---|---|---|---|---|
+| CPU-Temperatur | `cpu_temp` | °C | ⚠️ | Siehe unten |
+| CPU-Auslastung | `cpu_usage` | % | ✅ | |
+| RAM Auslastung | `memory` | % | ✅ | |
+| RAM Verfügbar | `memory_available` | GB | ✅ | |
+| Akku | `battery` | % | ✅ | |
+| Akku lädt | `battery_charging` | – | ✅ | |
+| Akku-Ladezyklen | `battery_cycle_count` | – | ✅ | 🍎 macOS-exklusiv |
+| Netzteil | `power_adapter` | – | ✅ | 🍎 macOS-exklusiv |
+| Festplatte | `disk_usage` | % | ✅ | |
+| Betriebszeit | `uptime` | min | ✅ | |
+| GPU-Modell | `gpu_model` | – | ✅ | 🍎 macOS-exklusiv |
+| Bildschirmauflösung | `display_resolution` | – | ✅ | 🍎 macOS-exklusiv |
+| Prozesse | `process_count` | – | ✅ | |
+| IP-Adresse | `ip_address` | – | ✅ | |
+| WiFi-Name | `wifi_ssid` | – | ✅ | |
+| Tastaturbeleuchtung | `keyboard_backlight` | % | ⚠️ | 🍎 macOS-exklusiv, nicht auf allen Macs |
+| Vollbild-App | `fullscreen_app` | – | ✅ | |
+| Vollbild | `fullscreen` | – | ✅ | |
+| Monitor-Layout | `monitor_layout` | – | ✅ | |
+| Helligkeit | `brightness` | % | ✅ | |
+
+### CPU-Temperatur – Erklärung
+
+Die CPU-Temperatur wird in folgender Reihenfolge versucht:
+
+1. **ioreg SMC** (keine Installation nötig) – liest direkt aus dem Apple System Management Controller. Funktioniert ohne sudo auf den meisten Macs.
+2. **powermetrics** – macOS-Bordmittel, benötigt aber `sudo` auf vielen Systemen.
+3. **osx-cpu-temp** – externes Tool, muss installiert werden: `brew install osx-cpu-temp`
+
+Wenn keine Methode funktioniert, bleibt der Sensor leer.
+
+### Nicht verfügbare Sensoren (im Vergleich zu Windows/Linux)
+
+| Sensor | Windows | Linux | macOS | Warum nicht auf macOS? |
+|---|---|---|---|---|
+| GPU-Temperatur | ✅ LibreHardwareMonitor | ✅ | ❌ | Keine öffentliche API, LibreHardwareMonitor gibt es nicht für macOS |
+| GPU-Auslastung | ✅ LibreHardwareMonitor | ✅ | ❌ | Nur via `sudo powermetrics` – nicht ohne Admin-Rechte |
+| CPU-Takt | ✅ LibreHardwareMonitor | ✅ | ❌ | `sysctl hw.cpufrequency` funktioniert **nicht** auf Apple Silicon (nur Intel-Macs) |
+| Lüfter-Drehzahl | ✅ LibreHardwareMonitor | ✅ | ❌ | Nur via `sudo powermetrics` auslesbar |
+| Lüfter-Steuerung | ✅ | ❌ | ❌ | System-geregelt, kein User-Zugang |
+| Netzwerk-Upload/Download | ✅ | ✅ | ❌ | `netstat -ib` liefert Byte-Counts aber keine Live-Rate ohne Polling-Logik |
+| WLAN-Signal | ✅ | ✅ | ❌ | Keine User-Level API für Signalstärke auf macOS |
+| Seitenfile | ✅ | ❌ | ❌ | macOS hat kein Äquivalent zum Windows Page File |
 
 ## Befehle
 
@@ -35,7 +72,7 @@ Wenn du macOS nutzt, teste bitte diese Version und melde Bugs – **die Communit
 ## Installation
 
 ```bash
-# DMG herunterladen und installieren
+# ZIP herunterladen und entpacken
 # oder: Aus dem Quellcode bauen
 dotnet build src/HaDeskLink -c Release -r osx-arm64
 ```

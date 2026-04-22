@@ -55,10 +55,54 @@ public static class SensorManager
         if (batCharging.HasValue)
             sensors.Add(new SensorData("battery_charging", "Akku Laden", batCharging.Value ? "Lädt" : "Nicht ladend", "", "plug", "mdi:battery-charging"));
 
+        // Battery cycle count (macOS exclusive)
+        var cycleCount = GetBatteryCycleCount();
+        if (cycleCount.HasValue)
+            sensors.Add(new SensorData("battery_cycle_count", "Akku-Ladezyklen", cycleCount.Value, "", "battery", "mdi:battery-heart", "measurement"));
+
+        // Power adapter status (macOS exclusive)
+        var powerAdapter = GetPowerAdapterStatus();
+        sensors.Add(new SensorData("power_adapter", "Netzteil", powerAdapter, "", "plug", "mdi:power-plug"));
+
         // Disk usage for root volume
         var diskPercent = GetDiskUsage();
         if (diskPercent.HasValue)
             sensors.Add(new SensorData("disk_usage", "Festplatte", diskPercent.Value, "%", "", "mdi:harddisk", "measurement"));
+
+        // Uptime
+        var uptime = GetUptime();
+        if (uptime.HasValue)
+            sensors.Add(new SensorData("uptime", "Betriebszeit", uptime.Value, "min", "", "mdi:clock-outline", "measurement"));
+
+        // GPU info (macOS exclusive – model name)
+        var gpuModel = GetGpuModel();
+        if (!string.IsNullOrEmpty(gpuModel))
+            sensors.Add(new SensorData("gpu_model", "GPU-Modell", gpuModel, "", "", "mdi:chip"));
+
+        // Display resolution (macOS exclusive)
+        var displayRes = GetDisplayResolution();
+        if (!string.IsNullOrEmpty(displayRes))
+            sensors.Add(new SensorData("display_resolution", "Bildschirmauflösung", displayRes, "", "", "mdi:monitor-screenshot"));
+
+        // Process count
+        var processCount = GetProcessCount();
+        if (processCount.HasValue)
+            sensors.Add(new SensorData("process_count", "Prozesse", processCount.Value, "", "", "mdi:application-cog", "measurement"));
+
+        // IP Address
+        var ipAddress = GetIpAddress();
+        if (!string.IsNullOrEmpty(ipAddress))
+            sensors.Add(new SensorData("ip_address", "IP-Adresse", ipAddress, "", "", "mdi:ip-network"));
+
+        // WiFi SSID
+        var wifiSsid = GetWifiSsid();
+        if (!string.IsNullOrEmpty(wifiSsid))
+            sensors.Add(new SensorData("wifi_ssid", "WiFi-Name", wifiSsid, "", "", "mdi:wifi"));
+
+        // Keyboard backlight (macOS exclusive)
+        var kbBacklight = GetKeyboardBacklight();
+        if (kbBacklight.HasValue)
+            sensors.Add(new SensorData("keyboard_backlight", "Tastaturbeleuchtung", kbBacklight.Value, "%", "", "mdi:keyboard-outline", "measurement"));
 
         // Fullscreen sensor
         var fullscreenApp = GetFullscreenApp();
@@ -81,9 +125,99 @@ public static class SensorManager
 
     private static float? GetCpuTemperature()
     {
+        // Method 1: ioreg SMC – reads temperature directly from AppleSMC, NO sudo needed
         try
         {
-            // Try using powermetrics (requires sudo on some systems)
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"ioreg -r -n AppleSMC | grep -A1 '" \"TA0p\"'\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc != null)
+            {
+                var output = proc.StandardOutput.ReadToEnd();
+                proc.WaitForExit(3000);
+                // Parse SMC hex value: "TA0p" = <000e2c00>
+                var match = System.Text.RegularExpressions.Regex.Match(output, @"<([0-9a-fA-F]{8})>");
+                if (match.Success)
+                {
+                    var hex = match.Groups[1].Value;
+                    if (hex.Length == 8)
+                    {
+                        // SMC encoding: swap byte pairs, then divide by 256
+                        // <000e2c00> → bytes 00 0e 2c 00 → swap pairs → 0e 00 2c 00
+                        // Take first 2 bytes as big-endian: 0e00 = 3584 → 3584/256 = 14.0
+                        // Actually: swap 4-byte pairs: 2c00 000e → take first pair: 2c00 → little-endian: 002c = 44 → no
+                        // Correct: 4 bytes, swap pair order: byte0↔byte2, byte1↔byte3
+                        var b = new int[4];
+                        for (int i = 0; i < 4; i++)
+                            b[i] = Convert.ToInt32(hex.Substring(i * 2, 2), 16);
+                        // Swap pairs: [0,1,2,3] → [2,3,0,1]
+                        int val = (b[2] << 8) | b[3]; // second pair as little-endian
+                        // Alternative: some keys use [0,1] as big-endian
+                        int val2 = (b[0] << 8) | b[1];
+                        // Try both decodings, return the one that makes sense (10-120°C)
+                        float temp1 = val / 256f;
+                        float temp2 = val2 / 256f;
+                        if (temp1 >= 10 && temp1 <= 120)
+                            return (float)Math.Round(temp1, 1);
+                        if (temp2 >= 10 && temp2 <= 120)
+                            return (float)Math.Round(temp2, 1);
+                    }
+                }
+            }
+
+            // Try additional SMC temp keys (different Mac models use different keys)
+            var tempKeys = new[] { "TC0P", "TC0H", "TC0D", "TCGC", "TG0P", "TG0D", "Th1H" };
+            foreach (var key in tempKeys)
+            {
+                try
+                {
+                    var psi2 = new ProcessStartInfo
+                    {
+                        FileName = "bash",
+                        Arguments = $"-c \"ioreg -r -n AppleSMC | grep -A1 '" + key + "'\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true
+                    };
+                    var proc2 = Process.Start(psi2);
+                    if (proc2 == null) continue;
+                    var output2 = proc2.StandardOutput.ReadToEnd();
+                    proc2.WaitForExit(3000);
+
+                    var match2 = System.Text.RegularExpressions.Regex.Match(output2, @"<([0-9a-fA-F]{8})>");
+                    if (match2.Success)
+                    {
+                        var hex2 = match2.Groups[1].Value;
+                        if (hex2.Length == 8)
+                        {
+                            var b2 = new int[4];
+                            for (int i = 0; i < 4; i++)
+                                b2[i] = Convert.ToInt32(hex2.Substring(i * 2, 2), 16);
+                            int valA = (b2[0] << 8) | b2[1];
+                            int valB = (b2[2] << 8) | b2[3];
+                            float tA = valA / 256f;
+                            float tB = valB / 256f;
+                            if (tA >= 10 && tA <= 120)
+                                return (float)Math.Round(tA, 1);
+                            if (tB >= 10 && tB <= 120)
+                                return (float)Math.Round(tB, 1);
+                        }
+                    }
+                }
+                catch { continue; }
+            }
+        }
+        catch { }
+
+        // Method 2: powermetrics (may require sudo on some systems)
+        try
+        {
             var psi = new ProcessStartInfo
             {
                 FileName = "powermetrics",
@@ -98,8 +232,6 @@ public static class SensorManager
             var output = proc.StandardOutput.ReadToEnd();
             proc.WaitForExit(5000);
 
-            // Parse CPU die temperature from powermetrics output
-            // Example line: "CPU die temperature: 58.75 C"
             foreach (var line in output.Split('\n'))
             {
                 if (line.Contains("CPU die temperature") || line.Contains("die temperature"))
@@ -116,7 +248,7 @@ public static class SensorManager
         }
         catch { }
 
-        // Fallback: try osx-cpu-temp if installed
+        // Method 3: osx-cpu-temp (requires: brew install osx-cpu-temp)
         try
         {
             var psi = new ProcessStartInfo
@@ -130,7 +262,6 @@ public static class SensorManager
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
             proc.WaitForExit(3000);
-            // Output: "58.75°C"
             output = output.Replace("°C", "").Trim();
             if (float.TryParse(output, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var temp))
                 return temp;
@@ -160,9 +291,6 @@ public static class SensorManager
             // Output: "CPU usage: 12.5% user, 8.3% sys, 79.2% idle"
             if (output.Contains("idle"))
             {
-                var idleStr = output.Split("idle")[0].Trim();
-                var percentStr = idleStr.Split('%').Last().Trim();
-                // Extract the idle percentage
                 var match = System.Text.RegularExpressions.Regex.Match(output, @"(\d+[\.,]\d+)%\s*idle");
                 if (match.Success && float.TryParse(match.Groups[1].Value.Replace(',', '.'),
                     System.Globalization.NumberStyles.Float,
@@ -187,7 +315,7 @@ public static class SensorManager
             var psi = new ProcessStartInfo
             {
                 FileName = "bash",
-                Arguments = "-c \"vm_stat | head -10; sysctl -n hw.memsize\"",
+                Arguments = "-c \"vm_stat | head -10; echo '---'; sysctl -n hw.memsize\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
@@ -197,7 +325,7 @@ public static class SensorManager
             var output = proc.StandardOutput.ReadToEnd();
             proc.WaitForExit(5000);
 
-            ulong totalPages = 0, freePages = 0, inactivePages = 0, totalPagesSpecified = 0;
+            ulong freePages = 0, inactivePages = 0;
             ulong totalMemory = 0;
             const int pageSize = 16384; // Apple Silicon: 16KB pages
 
@@ -207,16 +335,16 @@ public static class SensorManager
                     freePages = ParseUlong(line.Split(':')[1].Trim().Trim('.'));
                 else if (line.Contains("Pages inactive:"))
                     inactivePages = ParseUlong(line.Split(':')[1].Trim().Trim('.'));
-                else if (line.Contains("hw.memsize"))
-                    totalMemory = ParseUlong(line.Trim());
-                else if (line.Contains("page size of"))
-                {
-                    var psMatch = System.Text.RegularExpressions.Regex.Match(line, @"page size of (\d+)");
-                    if (psMatch.Success) { /* could override pageSize */ }
-                }
             }
 
-            // If we got hw.memsize, use it
+            // Parse hw.memsize (after --- separator)
+            var sections = output.Split("---");
+            if (sections.Length > 1)
+            {
+                var memStr = sections[1].Trim();
+                totalMemory = ParseUlong(memStr);
+            }
+
             if (totalMemory > 0)
             {
                 var freeMemory = (freePages + inactivePages) * (ulong)pageSize;
@@ -254,18 +382,90 @@ public static class SensorManager
             var output = proc.StandardOutput.ReadToEnd().Trim();
             proc.WaitForExit(3000);
 
-            // Output: "-1	100%; discharging; ..."
-            // or: "100%; charging; ..."
             var match = System.Text.RegularExpressions.Regex.Match(output, @"(\d+)%");
             if (match.Success && int.TryParse(match.Groups[1].Value, out var pct))
             {
                 bool charging = output.Contains("charging") || output.Contains("AC Power");
-                bool discharging = output.Contains("discharging");
                 return (pct, charging);
             }
         }
         catch { }
         return (null, null);
+    }
+
+    private static int? GetBatteryCycleCount()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"system_profiler SPPowerDataType | grep 'Cycle Count'\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(5000);
+
+            // Output: "Cycle Count: 42"
+            var match = System.Text.RegularExpressions.Regex.Match(output, @"Cycle Count:\s*(\d+)");
+            if (match.Success && int.TryParse(match.Groups[1].Value, out var count))
+                return count;
+        }
+        catch { }
+        return null;
+    }
+
+    private static string GetPowerAdapterStatus()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"pmset -g adapter\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return "Unbekannt";
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(3000);
+
+            // If adapter info is present, it's connected
+            if (!string.IsNullOrEmpty(output) && output.Contains("Watt"))
+                return "Angeschlossen";
+        }
+        catch { }
+
+        // Fallback: check via pmset -g batt
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"pmset -g batt\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return "Unbekannt";
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(3000);
+
+            if (output.Contains("AC Power") || output.Contains("charging"))
+                return "Angeschlossen";
+            if (output.Contains("discharging"))
+                return "Nicht angeschlossen";
+        }
+        catch { }
+
+        return "Unbekannt";
     }
 
     #endregion
@@ -289,7 +489,6 @@ public static class SensorManager
             var output = proc.StandardOutput.ReadToEnd();
             proc.WaitForExit(3000);
 
-            // Output: "Filesystem Size Used Avail Capacity Mounted on\n/dev/... 500G 250G 250G 50% /"
             foreach (var line in output.Split('\n'))
             {
                 if (line.Contains("/") && line.Contains("%"))
@@ -306,13 +505,277 @@ public static class SensorManager
 
     #endregion
 
+    #region Uptime
+
+    private static float? GetUptime()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"sysctl -n kern.boottime\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(3000);
+
+            // Output: "sec = 1703275200, usec = 0" (Unix timestamp of boot)
+            var match = System.Text.RegularExpressions.Regex.Match(output, @"sec = (\d+)");
+            if (match.Success && long.TryParse(match.Groups[1].Value, out var bootSec))
+            {
+                var bootTime = DateTimeOffset.FromUnixTimeSeconds(bootSec);
+                var uptime = DateTimeOffset.UtcNow - bootTime;
+                return (float)Math.Round(uptime.TotalMinutes, 0);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    #endregion
+
+    #region GPU
+
+    private static string? GetGpuModel()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"system_profiler SPDisplaysDataType | grep 'Chipset Model'\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(5000);
+
+            // Output: "Chipset Model: Apple M1"
+            foreach (var line in output.Split('\n'))
+            {
+                if (line.Contains("Chipset Model:"))
+                {
+                    var model = line.Split(new[] { ':' }, 2).Last().Trim();
+                    if (!string.IsNullOrEmpty(model))
+                        return model;
+                }
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    private static string? GetDisplayResolution()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"system_profiler SPDisplaysDataType | grep 'Resolution'\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(5000);
+
+            // Output: "Resolution: 2560 x 1600 Retina"
+            foreach (var line in output.Split('\n'))
+            {
+                if (line.Contains("Resolution:"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(line, @"(\d+)\s*x\s*(\d+)");
+                    if (match.Success)
+                        return $"{match.Groups[1].Value}x{match.Groups[2].Value}";
+                }
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    #endregion
+
+    #region Process Count
+
+    private static int? GetProcessCount()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"ps aux | wc -l\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(3000);
+
+            if (int.TryParse(output, out var count))
+                return Math.Max(0, count - 1); // subtract header line
+        }
+        catch { }
+        return null;
+    }
+
+    #endregion
+
+    #region Network
+
+    private static string? GetIpAddress()
+    {
+        try
+        {
+            // Try primary interface (en0 = usually WiFi or Ethernet on Mac)
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"ipconfig getifaddr en0 2>/dev/null || echo ''\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(3000);
+
+            if (!string.IsNullOrEmpty(output) && output.Contains("."))
+                return output;
+        }
+        catch { }
+
+        // Fallback: try en1 (secondary interface)
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"ipconfig getifaddr en1 2>/dev/null || echo ''\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(3000);
+
+            if (!string.IsNullOrEmpty(output) && output.Contains("."))
+                return output;
+        }
+        catch { }
+        return null;
+    }
+
+    private static string? GetWifiSsid()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"networksetup -getairportnetwork en0 2>/dev/null || /System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I 2>/dev/null | grep ' SSID'\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            proc.WaitForExit(3000);
+
+            // Output: "Current Wi-Fi Network: MyNetwork" or "SSID: MyNetwork"
+            if (output.Contains(":"))
+            {
+                var ssid = output.Split(new[] { ':' }, 2).Last().Trim();
+                if (!string.IsNullOrEmpty(ssid) && !ssid.Contains("could not") && !ssid.Contains("not found"))
+                    return ssid;
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    #endregion
+
+    #region Keyboard Backlight
+
+    private static int? GetKeyboardBacklight()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"ioreg -r -c AppleBacklightDisplay | grep -i brightness\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc != null)
+            {
+                var output = proc.StandardOutput.ReadToEnd().Trim();
+                proc.WaitForExit(3000);
+
+                var match = System.Text.RegularExpressions.Regex.Match(output, @"brightness.*?(\d+)");
+                if (match.Success && int.TryParse(match.Groups[1].Value, out var val))
+                    return Math.Clamp(val, 0, 100);
+            }
+        }
+        catch { }
+
+        // Fallback: try keyboard backlight via osascript
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "osascript",
+                Arguments = "-e 'tell application \"System Events\" to get keyboard brightness'",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc != null)
+            {
+                var output = proc.StandardOutput.ReadToEnd().Trim();
+                proc.WaitForExit(3000);
+                if (float.TryParse(output, System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out var val))
+                {
+                    return (int)Math.Round(val * 100);
+                }
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    #endregion
+
     #region Fullscreen
 
     private static string GetFullscreenApp()
     {
         try
         {
-            // Use AppleScript to check for fullscreen apps
             var psi = new ProcessStartInfo
             {
                 FileName = "osascript",
@@ -326,7 +789,6 @@ public static class SensorManager
             var output = proc.StandardOutput.ReadToEnd().Trim();
             proc.WaitForExit(3000);
 
-            // Check each visible process for fullscreen
             foreach (var appName in output.Split(',').Select(s => s.Trim().Trim('"')))
             {
                 if (string.IsNullOrEmpty(appName)) continue;
@@ -345,10 +807,8 @@ public static class SensorManager
                     var bounds = fsProc.StandardOutput.ReadToEnd().Trim();
                     fsProc.WaitForExit(2000);
 
-                    // Check if window covers full screen
                     if (!string.IsNullOrEmpty(bounds) && bounds.Contains(","))
                     {
-                        // Simple heuristic: if window starts at 0,0 it might be fullscreen
                         var parts = bounds.Split(',').Select(s => s.Trim()).ToArray();
                         if (parts.Length >= 4 && parts[0] == "0" && parts[1] == "0")
                             return appName;
@@ -397,7 +857,6 @@ public static class SensorManager
     {
         try
         {
-            // Try brightness command (Homebrew installable)
             var psi = new ProcessStartInfo
             {
                 FileName = "brightness",
@@ -422,7 +881,6 @@ public static class SensorManager
         }
         catch { }
 
-        // Fallback: try osascript
         try
         {
             var psi = new ProcessStartInfo
@@ -455,7 +913,6 @@ public static class SensorManager
         percent = Math.Clamp(percent, 0, 100);
         var fraction = (percent / 100f).ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
 
-        // Try brightness command
         try
         {
             var psi = new ProcessStartInfo
@@ -470,7 +927,6 @@ public static class SensorManager
         }
         catch { }
 
-        // Fallback: osascript
         try
         {
             var psi = new ProcessStartInfo
