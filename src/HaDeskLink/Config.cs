@@ -35,6 +35,7 @@ public class Config
     public int SensorInterval { get; set; } = 30;
     public string UpdateChannel { get; set; } = "stable";
     public string Language { get; set; } = "de";
+    public string QuickActions { get; set; } = "[]";
     /// <summary>
     /// Encrypted HA token. When set, HaToken is cleared.
     /// </summary>
@@ -232,6 +233,7 @@ public class Config
             SensorInterval = SensorInterval,
             UpdateChannel = UpdateChannel,
             Language = Language,
+            QuickActions = QuickActions,
             HaTokenEncrypted = HaTokenEncrypted
         };
 

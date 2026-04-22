@@ -2,6 +2,13 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 
+## [v3.0.0] - 2026-04-22
+- 🔔 **Actionable Notifications** – Benachrichtigungen mit Aktionen via osascript. Auto-executet `command_on_action`, zeigt verfügbare Aktionen im Notification-Text.
+- ⚡ **Quick Actions** – Avalonia UI Popup mit HA-Entity-Toggle-Buttons. Button im Dashboard. Konfigurierbar in config.json (`QuickActions`-Feld).
+- 📸 **Screenshot Save+Upload** – Neuer Befehl `screenshot_save`: speichert via `screencapture` und lädt als HA-Event hoch.
+- 📷 **Webcam-Sensor** – Neuer Sensor `webcam_active` (on/off) prüft via lsof/ioreg ob Kamera aktiv.
+- 🌍 **Neue Lokalisierungs-Keys** für alle 6 Sprachen
+
 ## [v2.2.2] - 2026-04-22
 - 🆕 **Neue Sensoren:**
   - Akku-Ladezyklen (`battery_cycle_count`) – 🍎 macOS-exklusiv

@@ -23,6 +23,10 @@ public class DeskLinkApp : Application
 {
     private HaWebSocketClient? _ws;
     private System.Threading.Timer? _sensorTimer;
+    public static DeskLinkApp? Instance { get; private set; }
+    private HaApiClient? _api;
+
+    public HaApiClient GetApiClient() => _api ?? throw new InvalidOperationException("API not initialized");
 
     public override void Initialize()
     {
@@ -31,8 +35,10 @@ public class DeskLinkApp : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        Instance = this;
         var config = Program.GlobalConfig!;
         var api = Program.GlobalApi!;
+        _api = api;
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -61,7 +67,7 @@ public class DeskLinkApp : Application
                 config.HaToken,
                 webhookId,
                 null,
-                cmd => CommandHandler.Execute(cmd)
+                cmd => { try { _ = CommandHandler.ExecuteAsync(cmd); } catch { } }
             );
 
             _ = Task.Run(async () =>

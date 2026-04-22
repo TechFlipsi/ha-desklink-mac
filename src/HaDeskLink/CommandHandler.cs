@@ -12,6 +12,8 @@
 #nullable enable
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace HaDeskLink;
 
@@ -21,7 +23,7 @@ namespace HaDeskLink;
 /// </summary>
 public static class CommandHandler
 {
-    public static void Execute(string command)
+    public static async Task ExecuteAsync(string command)
     {
         switch (command.ToLowerInvariant())
         {
@@ -59,6 +61,21 @@ public static class CommandHandler
             case "screenshot":
                 // Save screenshot to Desktop
                 Run("screencapture", "-x ~/Desktop/ha-desklink-screenshot.png");
+                break;
+            case "screenshot_save":
+                var savePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "ha-desklink-screenshot.png");
+                Run("screencapture", $"-x {savePath}");
+                // Upload to HA
+                try
+                {
+                    var app = DeskLinkApp.Instance;
+                    if (app != null)
+                    {
+                        var api = app.GetApiClient();
+                        await api.UploadScreenshotAsync(savePath);
+                    }
+                }
+                catch { }
                 break;
             case "brightness_up":
                 {

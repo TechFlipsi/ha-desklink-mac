@@ -11,6 +11,8 @@
 // GNU General Public License for more details.
 #nullable enable
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -148,6 +150,8 @@ public class HaWebSocketClient : IDisposable
                     string title = "HA DeskLink";
                     string message = "";
                     string? command = null;
+                    List<NotificationAction>? actions = null;
+                    string? commandOnAction = null;
 
                     if (eventEl.TryGetProperty("title", out var t))
                         title = t.GetString() ?? title;
@@ -161,13 +165,35 @@ public class HaWebSocketClient : IDisposable
                             title = dt.GetString() ?? title;
                         if (data.TryGetProperty("message", out var dm))
                             message = dm.GetString() ?? message;
+                        if (data.TryGetProperty("command_on_action", out var coa))
+                            commandOnAction = coa.GetString();
+                        if (data.TryGetProperty("actions", out var actionsArr))
+                        {
+                            actions = new List<NotificationAction>();
+                            foreach (var a in actionsArr.EnumerateArray())
+                            {
+                                var act = a.GetProperty("action").GetString() ?? "";
+                                var actTitle = a.TryGetProperty("title", out var at) ? at.GetString() ?? act : act;
+                                var actCommand = a.TryGetProperty("command", out var ac) ? ac.GetString() : null;
+                                actions.Add(new NotificationAction(act, actTitle, actCommand));
+                            }
+                        }
                     }
 
-                    if (!string.IsNullOrEmpty(command))
+                    // Execute command if present (no action buttons)
+                    if (!string.IsNullOrEmpty(command) && actions == null)
                     {
                         try { _onCommand?.Invoke(command!); }
                         catch { }
                         Console.WriteLine($"Befehl ausgeführt: {command}");
+                    }
+
+                    // Handle actionable notifications
+                    if (actions != null && actions.Count > 0 && !string.IsNullOrEmpty(commandOnAction))
+                    {
+                        Console.WriteLine($"[Action] Auto-executing: {commandOnAction}");
+                        try { CommandHandler.Execute(commandOnAction); }
+                        catch { }
                     }
 
                     if (!string.IsNullOrEmpty(message))
@@ -177,10 +203,13 @@ public class HaWebSocketClient : IDisposable
                         {
                             var escapedTitle = title.Replace("\"", "\\\"");
                             var escapedMsg = message.Replace("\"", "\\\"");
+                            var actionHint = actions != null && actions.Count > 0
+                                ? $" | Aktionen: {string.Join(", ", actions.Select(a => a.Title))}"
+                                : "";
                             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                             {
                                 FileName = "osascript",
-                                Arguments = $"-e 'display notification \"{escapedMsg}\" with title \"{escapedTitle}\"'",
+                                Arguments = $"-e 'display notification \"{escapedMsg}{actionHint}\" with title \"{escapedTitle}\"'",
                                 UseShellExecute = false,
                                 CreateNoWindow = true
                             })?.WaitForExit(3000);
@@ -213,5 +242,18 @@ public class HaWebSocketClient : IDisposable
             _cts?.Dispose();
             _disposed = true;
         }
+    }
+}
+
+public class NotificationAction
+{
+    public string ActionKey { get; }
+    public string Title { get; }
+    public string? Command { get; }
+    public NotificationAction(string actionKey, string title, string? command = null)
+    {
+        ActionKey = actionKey;
+        Title = title;
+        Command = command;
     }
 }

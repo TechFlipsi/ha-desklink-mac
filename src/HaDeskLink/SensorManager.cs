@@ -118,6 +118,10 @@ public static class SensorManager
         if (brightness.HasValue)
             sensors.Add(new SensorData("brightness", "Helligkeit", brightness.Value, "%", "", "mdi:brightness-6", "measurement"));
 
+        // Webcam active
+        var webcamActive = GetWebcamActive();
+        sensors.Add(new SensorData("webcam_active", Localization.Get("webcam_active", "Webcam Aktiv"), webcamActive ? "on" : "off", "", "", "mdi:webcam"));
+
         return sensors;
     }
 
@@ -815,6 +819,58 @@ public static class SensorManager
         }
         catch { }
         return "unbekannt";
+    }
+
+    #endregion
+
+    #region Webcam
+
+    private static bool GetWebcamActive()
+    {
+        try
+        {
+            // Check if any process has a camera device open via lsof
+            var psi = new ProcessStartInfo
+            {
+                FileName = "lsof",
+                Arguments = "-c",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return false;
+            var output = proc.StandardOutput.ReadToEnd();
+            proc.WaitForExit(3000);
+
+            // Check for camera-related devices in lsof output
+            if (output.Contains("Camera") || output.Contains("VDC") || output.Contains("coremediaio"))
+                return true;
+        }
+        catch { }
+
+        try
+        {
+            // Alternative: check via ioreg for active camera
+            var psi2 = new ProcessStartInfo
+            {
+                FileName = "ioreg",
+                Arguments = "-r -c IOAVDevice -n AppleCamera",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc2 = Process.Start(psi2);
+            if (proc2 == null) return false;
+            var output2 = proc2.StandardOutput.ReadToEnd();
+            proc2.WaitForExit(3000);
+
+            if (output2.Contains("Online") || output2.Contains("Active"))
+                return true;
+        }
+        catch { }
+
+        return false;
     }
 
     #endregion

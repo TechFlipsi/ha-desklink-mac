@@ -16,7 +16,9 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace HaDeskLink.Views;
 
@@ -95,6 +97,17 @@ public class MainWindow : Window
                     CornerRadius = new CornerRadius(8)
                 },
 
+                // Quick Actions button
+                new Button
+                {
+                    Content = "⚡ Quick Actions",
+                    FontSize = 14,
+                    Padding = new Thickness(15, 8),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    CornerRadius = new CornerRadius(8)
+                },
+
                 // Sensor info
                 new TextBlock
                 {
@@ -127,6 +140,10 @@ public class MainWindow : Window
         var dashboardBtn = (Button)panel.Children[3];
         dashboardBtn.Click += OnOpenDashboard;
 
+        // Quick Actions button
+        var quickActionsBtn = (Button)panel.Children[4];
+        quickActionsBtn.Click += OnQuickActions;
+
         Content = panel;
     }
 
@@ -156,4 +173,94 @@ public class MainWindow : Window
         catch { }
         return "2.2.1";
     }
+
+    private async void OnQuickActions(object? sender, RoutedEventArgs e)
+    {
+        var actions = LoadQuickActions(_config);
+
+        if (actions.Count == 0)
+        {
+            var emptyDialog = new Window
+            {
+                Title = "Quick Actions",
+                Width = 350, Height = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Content = new StackPanel
+                {
+                    Margin = new Thickness(20),
+                    Spacing = 10,
+                    Children =
+                    {
+                        new TextBlock { Text = "Keine Quick Actions konfiguriert.", FontSize = 14 },
+                        new TextBlock { Text = "In config.json hinzufügen:\nFormat: entity_id,name", Foreground = Brushes.Gray, FontSize = 12 },
+                        new Button { Content = "OK", HorizontalAlignment = HorizontalAlignment.Center }
+                    }
+                }
+            };
+            ((Button)((StackPanel)emptyDialog.Content).Children[2]).Click += (s, args) => emptyDialog.Close();
+            await emptyDialog.ShowDialog(this);
+            return;
+        }
+
+        var panel = new StackPanel { Margin = new Thickness(20), Spacing = 8 };
+        panel.Children.Add(new TextBlock { Text = "⚡ Quick Actions", FontSize = 18, FontWeight = FontWeight.Bold });
+
+        foreach (var action in actions)
+        {
+            var btn = new Button
+            {
+                Content = action.Name,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Tag = action
+            };
+            btn.Click += async (s, args) =>
+            {
+                var a = (QuickActionItem)((Button)s).Tag!;
+                try
+                {
+                    await _api.ToggleEntityAsync(a.EntityId);
+                    btn.Content = $"✓ {a.Name}";
+                }
+                catch { btn.Content = $"✗ {a.Name}"; }
+                await Task.Delay(1000);
+                btn.Content = a.Name;
+            };
+            panel.Children.Add(btn);
+        }
+
+        var dialog = new Window
+        {
+            Title = "Quick Actions",
+            Width = 350,
+            Height = Math.Max(150, 80 + actions.Count * 50),
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Content = panel
+        };
+        await dialog.ShowDialog(this);
+    }
+
+    private static List<QuickActionItem> LoadQuickActions(Config config)
+    {
+        var result = new List<QuickActionItem>();
+        try
+        {
+            var arr = System.Text.Json.JsonDocument.Parse(config.QuickActions).RootElement;
+            foreach (var item in arr.EnumerateArray())
+            {
+                var entityId = item.TryGetProperty("entityId", out var eid) ? eid.GetString() ?? "" : "";
+                var name = item.TryGetProperty("name", out var n) ? n.GetString() ?? entityId : entityId;
+                if (!string.IsNullOrEmpty(entityId))
+                    result.Add(new QuickActionItem(entityId, name));
+            }
+        }
+        catch { }
+        return result;
+    }
+}
+
+public class QuickActionItem
+{
+    public string EntityId { get; }
+    public string Name { get; }
+    public QuickActionItem(string entityId, string name) { EntityId = entityId; Name = name; }
 }

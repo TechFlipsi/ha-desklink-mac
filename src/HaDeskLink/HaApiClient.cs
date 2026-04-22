@@ -202,6 +202,67 @@ public class HaApiClient
         return null;
     }
 
+    public async Task ToggleEntityAsync(string entityId)
+    {
+        if (string.IsNullOrEmpty(_token)) throw new InvalidOperationException("Not authenticated");
+        var payload = new { entity_id = entityId };
+        var json = JsonSerializer.Serialize(payload);
+        var resp = await _http.PostAsync($"{_haUrl}/api/services/homeassistant/toggle",
+            new StringContent(json, Encoding.UTF8, "application/json"));
+        resp.EnsureSuccessStatusCode();
+    }
+
+    public async Task UploadScreenshotAsync(string imagePath)
+    {
+        if (!File.Exists(imagePath)) return;
+        var bytes = await File.ReadAllBytesAsync(imagePath);
+        var base64 = Convert.ToBase64String(bytes);
+        var payload = new Dictionary<string, object>
+        {
+            ["type"] = "fire_event",
+            ["event_type"] = "ha_desklink_screenshot",
+            ["event_data"] = new Dictionary<string, object>
+            {
+                ["screenshot"] = base64,
+                ["device_name"] = Environment.MachineName,
+                ["platform"] = "mac"
+            }
+        };
+        var json = JsonSerializer.Serialize(payload);
+        await _http.PostAsync(WebhookUrl, new StringContent(json, Encoding.UTF8, "application/json"));
+    }
+    {
+        try
+        {
+            using var ghClient = new HttpClient();
+            ghClient.DefaultRequestHeaders.Add("User-Agent", "HA-DeskLink");
+            var resp = await ghClient.GetAsync("https://api.github.com/repos/TechFlipsi/ha-desklink-mac/releases");
+            if (!resp.IsSuccessStatusCode) return null;
+            var data = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+            var currentVersion = GetVersion();
+            string? bestUrl = null;
+            var currentVer = ParseVersion(currentVersion);
+            foreach (var release in data.RootElement.EnumerateArray())
+            {
+                if (!includePrerelease && release.TryGetProperty("prerelease", out var pre) && pre.GetBoolean())
+                    continue;
+                var tagName = release.GetProperty("tag_name").GetString() ?? "";
+                if (tagName.StartsWith("v")) tagName = tagName[1..];
+                var releaseVer = ParseVersion(tagName);
+                if (releaseVer == null || releaseVer.CompareTo(currentVer) <= 0) continue;
+                foreach (var asset in release.GetProperty("assets").EnumerateArray())
+                {
+                    var name = asset.GetProperty("name").GetString() ?? "";
+                    if (name.EndsWith(".dmg") || name.EndsWith(".zip"))
+                        bestUrl = asset.GetProperty("browser_download_url").GetString();
+                }
+            }
+            return bestUrl;
+        }
+        catch { }
+        return null;
+    }
+
     private static Version ParseVersion(string version)
     {
         var parts = version.Split('.');
