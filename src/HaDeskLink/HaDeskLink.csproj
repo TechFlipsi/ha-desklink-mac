@@ -5,7 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>HA_DeskLink</AssemblyName>
     <RootNamespace>HaDeskLink</RootNamespace>
-    <Version>3.0.1</Version>
+    <Version>3.0.5</Version>
     <Nullable>enable</Nullable>
     <RuntimeIdentifier>osx-arm64</RuntimeIdentifier>
   </PropertyGroup>

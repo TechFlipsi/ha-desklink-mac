@@ -106,8 +106,7 @@ public static class SensorManager
 
         // Fullscreen sensor
         var fullscreenApp = GetFullscreenApp();
-        sensors.Add(new SensorData("fullscreen_app", "Vollbild-App", fullscreenApp, "", "", "mdi:fullscreen"));
-        sensors.Add(new SensorData("fullscreen", "Vollbild", string.IsNullOrEmpty(fullscreenApp) ? "Aus" : "An", "", "", "mdi:fullscreen"));
+        sensors.Add(new SensorData("fullscreen", "Vollbild", string.IsNullOrEmpty(fullscreenApp) ? "off" : "on", "", "", "mdi:fullscreen"));
 
         // Monitor layout
         var layout = GetMonitorLayout();
@@ -121,6 +120,10 @@ public static class SensorManager
         // Webcam active
         var webcamActive = GetWebcamActive();
         sensors.Add(new SensorData("webcam_active", Localization.Get("webcam_active", "Webcam Aktiv"), webcamActive ? "on" : "off", "", "", "mdi:webcam"));
+
+        // App version
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
+        sensors.Add(new SensorData("ha_desklink_version", Localization.Get("ha_desklink_version", "HA DeskLink Version"), version, "", "", "mdi:information-outline"));
 
         return sensors;
     }

@@ -58,5 +58,6 @@
   "quickactions_empty": "No Quick Actions configured.",
   "screenshot_saved": "Screenshot saved",
   "webcam_active": "Webcam Active",
-  "notification_action_executed": "Action executed"
+  "notification_action_executed": "Action executed",
+  "ha_desklink_version": "HA DeskLink Version"
 }
