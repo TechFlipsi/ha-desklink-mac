@@ -128,85 +128,53 @@ public static class SensorManager
         // Method 1: ioreg SMC – reads temperature directly from AppleSMC, NO sudo needed
         try
         {
-            var psi = new ProcessStartInfo
-            {
-                FileName = "bash",
-                Arguments = "-c \"ioreg -r -n AppleSMC | grep -A1 '" \"TA0p\"'\"",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true
-            };
-            var proc = Process.Start(psi);
-            if (proc != null)
-            {
-                var output = proc.StandardOutput.ReadToEnd();
-                proc.WaitForExit(3000);
-                // Parse SMC hex value: "TA0p" = <000e2c00>
-                var match = System.Text.RegularExpressions.Regex.Match(output, @"<([0-9a-fA-F]{8})>");
-                if (match.Success)
-                {
-                    var hex = match.Groups[1].Value;
-                    if (hex.Length == 8)
-                    {
-                        // SMC encoding: swap byte pairs, then divide by 256
-                        // <000e2c00> → bytes 00 0e 2c 00 → swap pairs → 0e 00 2c 00
-                        // Take first 2 bytes as big-endian: 0e00 = 3584 → 3584/256 = 14.0
-                        // Actually: swap 4-byte pairs: 2c00 000e → take first pair: 2c00 → little-endian: 002c = 44 → no
-                        // Correct: 4 bytes, swap pair order: byte0↔byte2, byte1↔byte3
-                        var b = new int[4];
-                        for (int i = 0; i < 4; i++)
-                            b[i] = Convert.ToInt32(hex.Substring(i * 2, 2), 16);
-                        // Swap pairs: [0,1,2,3] → [2,3,0,1]
-                        int val = (b[2] << 8) | b[3]; // second pair as little-endian
-                        // Alternative: some keys use [0,1] as big-endian
-                        int val2 = (b[0] << 8) | b[1];
-                        // Try both decodings, return the one that makes sense (10-120°C)
-                        float temp1 = val / 256f;
-                        float temp2 = val2 / 256f;
-                        if (temp1 >= 10 && temp1 <= 120)
-                            return (float)Math.Round(temp1, 1);
-                        if (temp2 >= 10 && temp2 <= 120)
-                            return (float)Math.Round(temp2, 1);
-                    }
-                }
-            }
-
-            // Try additional SMC temp keys (different Mac models use different keys)
-            var tempKeys = new[] { "TC0P", "TC0H", "TC0D", "TCGC", "TG0P", "TG0D", "Th1H" };
+            // Try multiple SMC temp keys (different Mac models use different keys)
+            var tempKeys = new[] { "TA0p", "TC0P", "TC0H", "TC0D", "TCGC", "TG0P", "TG0D", "Th1H" };
             foreach (var key in tempKeys)
             {
                 try
                 {
-                    var psi2 = new ProcessStartInfo
+                    var psi = new ProcessStartInfo
                     {
-                        FileName = "bash",
-                        Arguments = $"-c \"ioreg -r -n AppleSMC | grep -A1 '" + key + "'\"",
+                        FileName = "ioreg",
+                        Arguments = "-r -n AppleSMC",
                         UseShellExecute = false,
                         CreateNoWindow = true,
                         RedirectStandardOutput = true
                     };
-                    var proc2 = Process.Start(psi2);
-                    if (proc2 == null) continue;
-                    var output2 = proc2.StandardOutput.ReadToEnd();
-                    proc2.WaitForExit(3000);
+                    var proc = Process.Start(psi);
+                    if (proc == null) continue;
+                    var output = proc.StandardOutput.ReadToEnd();
+                    proc.WaitForExit(3000);
 
-                    var match2 = System.Text.RegularExpressions.Regex.Match(output2, @"<([0-9a-fA-F]{8})>");
-                    if (match2.Success)
+                    // Find the key and its hex value: "TA0p" = <000e2c00>
+                    var keyPattern = "\"" + key + "\"";
+                    var keyIdx = output.IndexOf(keyPattern);
+                    if (keyIdx < 0) continue;
+
+                    // Look for hex value <XXXXXXXX> near the key
+                    var afterKey = output.Substring(keyIdx);
+                    var match = System.Text.RegularExpressions.Regex.Match(afterKey, @"<([0-9a-fA-F]{8})>");
+                    if (match.Success)
                     {
-                        var hex2 = match2.Groups[1].Value;
-                        if (hex2.Length == 8)
+                        var hex = match.Groups[1].Value;
+                        if (hex.Length == 8)
                         {
-                            var b2 = new int[4];
-                            for (int i = 0; i < 4; i++)
-                                b2[i] = Convert.ToInt32(hex2.Substring(i * 2, 2), 16);
-                            int valA = (b2[0] << 8) | b2[1];
-                            int valB = (b2[2] << 8) | b2[3];
-                            float tA = valA / 256f;
-                            float tB = valB / 256f;
-                            if (tA >= 10 && tA <= 120)
-                                return (float)Math.Round(tA, 1);
-                            if (tB >= 10 && tB <= 120)
-                                return (float)Math.Round(tB, 1);
+                            var b0 = Convert.ToInt32(hex.Substring(0, 2), 16);
+                            var b1 = Convert.ToInt32(hex.Substring(2, 2), 16);
+                            var b2 = Convert.ToInt32(hex.Substring(4, 2), 16);
+                            var b3 = Convert.ToInt32(hex.Substring(6, 2), 16);
+
+                            // SMC temp encoding: big-endian 2-byte value, divide by 256
+                            // Try both pair orderings
+                            int val1 = (b0 << 8) | b1;
+                            int val2 = (b2 << 8) | b3;
+                            float t1 = val1 / 256f;
+                            float t2 = val2 / 256f;
+                            if (t1 >= 10 && t1 <= 120)
+                                return (float)Math.Round(t1, 1);
+                            if (t2 >= 10 && t2 <= 120)
+                                return (float)Math.Round(t2, 1);
                         }
                     }
                 }
