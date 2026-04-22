@@ -40,6 +40,16 @@ If you use macOS, please test this version and report bugs – **the community i
 dotnet build src/HaDeskLink -c Release -r osx-arm64
 ```
 
+## 📐 Versioning
+Starting from v2.2.1, each platform has **independent version numbers**:
+
+| Change | Example | Description |
+|---|---|---|
+| **Bug Fix** | 2.2.1 → 2.2.2 | Bug fix, affected platform only |
+| **New Features** | 2.2.x → 3.0.0 | New features, all platforms simultaneously |
+
+Each platform (Windows, Linux, macOS) has **its own version number**. A bug fix on macOS doesn't change the Windows version – and vice versa. Major feature updates bump all platforms at once.
+
 ## License
 
 GPL v3 – see [LICENSE](LICENSE)
