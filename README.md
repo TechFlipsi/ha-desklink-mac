@@ -1,4 +1,4 @@
-# HA DeskLink macOS v2.2.2
+# HA DeskLink macOS v3.0
 
 [![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
 [![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)
@@ -22,6 +22,13 @@ Es gibt keine Mac-Hardware zum Testen. Die App wurde basierend auf der funktioni
 Wenn du macOS nutzt, teste bitte diese Version und melde Bugs – **die Community ist der Tester!**
 
 ---
+
+## v3.0 New Features
+
+- 🔔 **Actionable Notifications** – Benachrichtigungen mit Aktions-Buttons via osascript
+- ⚡ **Quick Actions** – Dashboard-Button mit HA-Entity-Toggle-Popup
+- 📸 **Screenshot Save+Upload** – `screenshot_save` speichert via `screencapture` und lädt als HA-Event hoch
+- 📷 **Webcam-Sensor** – Neuer Sensor `webcam_active` (on/off)
 
 ## Sensoren
 
@@ -47,6 +54,7 @@ Wenn du macOS nutzt, teste bitte diese Version und melde Bugs – **die Communit
 | Vollbild | `fullscreen` | – | ✅ | |
 | Monitor-Layout | `monitor_layout` | – | ✅ | |
 | Helligkeit | `brightness` | % | ✅ | |
+| Webcam aktiv | `webcam_active` | – | ✅ | on/off |
 
 ### CPU-Temperatur – Erklärung
 
@@ -73,7 +81,7 @@ Wenn keine Methode funktioniert, bleibt der Sensor leer.
 
 ## Befehle
 
-`shutdown`, `restart`, `sleep`, `lock`, `mute`, `volume_up`, `volume_down`, `monitor_off`, `monitor_on`, `screenshot`, `brightness_up`, `brightness_down`, `brightness:50`
+`shutdown`, `restart`, `sleep`, `lock`, `mute`, `volume_up`, `volume_down`, `monitor_off`, `monitor_on`, `screenshot`, `screenshot_save`, `brightness_up`, `brightness_down`, `brightness:50`
 
 ## Installation
 
