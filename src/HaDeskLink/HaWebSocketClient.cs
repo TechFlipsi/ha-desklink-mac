@@ -159,17 +159,41 @@ public class HaWebSocketClient : IDisposable
                         message = m.GetString() ?? "";
                     if (eventEl.TryGetProperty("data", out var data))
                     {
+                        // Nested: data.data.command (HA mobile_app format)
+                        if (data.TryGetProperty("data", out var innerData))
+                        {
+                            if (innerData.TryGetProperty("command", out var c2))
+                                command ??= c2.GetString();
+                            if (innerData.TryGetProperty("command_on_action", out var coa2))
+                                commandOnAction ??= coa2.GetString();
+                            if (innerData.TryGetProperty("title", out var dt2))
+                                title = dt2.GetString() ?? title;
+                            if (innerData.TryGetProperty("message", out var dm2))
+                                message = dm2.GetString() ?? message;
+                            if (innerData.TryGetProperty("actions", out var actionsArr2))
+                            {
+                                actions ??= new List<NotificationAction>();
+                                foreach (var a in actionsArr2.EnumerateArray())
+                                {
+                                    var act = a.GetProperty("action").GetString() ?? "";
+                                    var actTitle = a.TryGetProperty("title", out var at) ? at.GetString() ?? act : act;
+                                    var actCommand = a.TryGetProperty("command", out var ac) ? ac.GetString() : null;
+                                    actions.Add(new NotificationAction(act, actTitle, actCommand));
+                                }
+                            }
+                        }
+                        // Flat: data.command
                         if (data.TryGetProperty("command", out var c))
-                            command = c.GetString();
+                            command ??= c.GetString();
                         if (data.TryGetProperty("title", out var dt))
                             title = dt.GetString() ?? title;
                         if (data.TryGetProperty("message", out var dm))
                             message = dm.GetString() ?? message;
                         if (data.TryGetProperty("command_on_action", out var coa))
-                            commandOnAction = coa.GetString();
+                            commandOnAction ??= coa.GetString();
                         if (data.TryGetProperty("actions", out var actionsArr))
                         {
-                            actions = new List<NotificationAction>();
+                            actions ??= new List<NotificationAction>();
                             foreach (var a in actionsArr.EnumerateArray())
                             {
                                 var act = a.GetProperty("action").GetString() ?? "";
