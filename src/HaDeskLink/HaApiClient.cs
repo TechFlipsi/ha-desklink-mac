@@ -231,6 +231,8 @@ public class HaApiClient
         var json = JsonSerializer.Serialize(payload);
         await _http.PostAsync(WebhookUrl, new StringContent(json, Encoding.UTF8, "application/json"));
     }
+
+    public async Task<string?> CheckForUpdateAsync(bool includePrerelease = false)
     {
         try
         {
