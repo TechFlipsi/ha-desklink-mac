@@ -192,17 +192,23 @@ public class Config
             }
             config.HaToken = "";
             config.Save();
-            config.HaToken = TryKeychainRead() ?? DecryptAesGcm(config.HaTokenEncrypted);
+            var migrated = TryKeychainRead() ?? DecryptAesGcm(config.HaTokenEncrypted);
+            if (!string.IsNullOrEmpty(migrated))
+                config.HaToken = migrated;
         }
         else if (!string.IsNullOrEmpty(config.HaTokenEncrypted))
         {
             if (config.HaTokenEncrypted == "keychain")
             {
-                config.HaToken = keychainToken ?? "";
+                var kcToken = keychainToken;
+                if (!string.IsNullOrEmpty(kcToken))
+                    config.HaToken = kcToken;
             }
             else
             {
-                config.HaToken = DecryptAesGcm(config.HaTokenEncrypted);
+                var decToken = DecryptAesGcm(config.HaTokenEncrypted);
+                if (!string.IsNullOrEmpty(decToken))
+                    config.HaToken = decToken;
             }
         }
 

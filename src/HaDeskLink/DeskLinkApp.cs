@@ -57,6 +57,12 @@ public class DeskLinkApp : Application
 
     private void StartWebSocket(Config config, HaApiClient api)
     {
+        if (string.IsNullOrEmpty(config.HaToken))
+        {
+            System.Console.WriteLine("[HA DeskLink] FEHLER: Token konnte nicht geladen werden. Bitte App neu einrichten.");
+            return;
+        }
+
         try
         {
             var regPath = Path.Combine(Config.GetConfigDir(), "registration.json");
