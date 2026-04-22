@@ -85,7 +85,7 @@ public class HaApiClient
         var data = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
         _webhookId = data.RootElement.GetProperty("webhook_id").GetString() ?? "";
         _cloudUrl = data.RootElement.TryGetProperty("cloudhook_url", out var cu) ? cu.GetString() ?? "" : "";
-        _deviceId = data.RootElement.TryGetProperty("device_id", out var di) ? di.GetString() ?? "";
+        _deviceId = data.RootElement.TryGetProperty("device_id", out var di) ? (di.GetString() ?? "") : "";
 
         SaveRegistration(haUrl, token);
     }
