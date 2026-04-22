@@ -1,5 +1,11 @@
 # HA DeskLink macOS v2.2.2
 
+[![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
+[![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)
+[![License](https://img.shields.io/github/license/TechFlipsi/ha-desklink-mac?label=License)](https://github.com/TechFlipsi/ha-desklink-mac/LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/TechFlipsi/ha-desklink-mac/total?label=Downloads)](https://github.com/TechFlipsi/ha-desklink-mac/releases)
+[![Discord](https://img.shields.io/discord/1496261911677894867?label=Discord)](https://discord.gg/HnCZY54U7)
+
 **Home Assistant Companion App für macOS**
 
 ⚠️ **COMMUNITY TEST VERSION – NICHT VOM ENTWICKLER GETESTET!** ⚠️
