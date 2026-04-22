@@ -232,39 +232,6 @@ public class HaApiClient
         await _http.PostAsync(WebhookUrl, new StringContent(json, Encoding.UTF8, "application/json"));
     }
 
-    public async Task<string?> CheckForUpdateAsync(bool includePrerelease = false)
-    {
-        try
-        {
-            using var ghClient = new HttpClient();
-            ghClient.DefaultRequestHeaders.Add("User-Agent", "HA-DeskLink");
-            var resp = await ghClient.GetAsync("https://api.github.com/repos/TechFlipsi/ha-desklink-mac/releases");
-            if (!resp.IsSuccessStatusCode) return null;
-            var data = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
-            var currentVersion = GetVersion();
-            string? bestUrl = null;
-            var currentVer = ParseVersion(currentVersion);
-            foreach (var release in data.RootElement.EnumerateArray())
-            {
-                if (!includePrerelease && release.TryGetProperty("prerelease", out var pre) && pre.GetBoolean())
-                    continue;
-                var tagName = release.GetProperty("tag_name").GetString() ?? "";
-                if (tagName.StartsWith("v")) tagName = tagName[1..];
-                var releaseVer = ParseVersion(tagName);
-                if (releaseVer == null || releaseVer.CompareTo(currentVer) <= 0) continue;
-                foreach (var asset in release.GetProperty("assets").EnumerateArray())
-                {
-                    var name = asset.GetProperty("name").GetString() ?? "";
-                    if (name.EndsWith(".dmg") || name.EndsWith(".zip"))
-                        bestUrl = asset.GetProperty("browser_download_url").GetString();
-                }
-            }
-            return bestUrl;
-        }
-        catch { }
-        return null;
-    }
-
     private static Version ParseVersion(string version)
     {
         var parts = version.Split('.');
