@@ -14,6 +14,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using HaDeskLink.Views;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 

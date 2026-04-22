@@ -192,7 +192,7 @@ public class HaWebSocketClient : IDisposable
                     if (actions != null && actions.Count > 0 && !string.IsNullOrEmpty(commandOnAction))
                     {
                         Console.WriteLine($"[Action] Auto-executing: {commandOnAction}");
-                        try { CommandHandler.Execute(commandOnAction); }
+                        try { _ = CommandHandler.ExecuteAsync(commandOnAction); }
                         catch { }
                     }
 
