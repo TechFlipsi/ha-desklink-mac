@@ -221,7 +221,7 @@ public static class SensorManager
             {
                 var freeMemory = (freePages + inactivePages) * (ulong)pageSize;
                 var usedPercent = (1f - (float)freeMemory / totalMemory) * 100f;
-                return (Math.Round(usedPercent, 1), Math.Round((float)freeMemory / 1024 / 1024 / 1024, 1));
+                return ((float)Math.Round(usedPercent, 1), (float)Math.Round((float)freeMemory / 1024 / 1024 / 1024, 1));
             }
         }
         catch { }
