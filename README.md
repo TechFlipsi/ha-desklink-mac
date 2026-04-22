@@ -8,6 +8,10 @@
 
 **Home Assistant Companion App für macOS**
 
+📖 **[Betriebsanleitung / Manual](MANUAL.md)** – Installation, Sensoren, Befehle, Quick Actions, Actionable Notifications, Screenshot, Webcam, Plattform-Vergleich & mehr (DE + EN)
+
+📊 **[HASS.Agent vs. HA DeskLink](COMPARISON.md)** – Features, Architektur & Migration im Vergleich (DE + EN)
+
 ⚠️ **COMMUNITY TEST VERSION – NICHT VOM ENTWICKLER GETESTET!** ⚠️
 
 Diese Version wurde ohne Mac-Hardware erstellt und ist auf **Community-Testing** angewiesen.
