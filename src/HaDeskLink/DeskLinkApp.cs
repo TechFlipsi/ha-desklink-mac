@@ -78,7 +78,7 @@ public class DeskLinkApp : Application
             );
 
             // Pass WS to MainWindow for retry button
-            if (desktop.MainWindow is Views.MainWindow mw)
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime dt && dt.MainWindow is Views.MainWindow mw)
                 mw.SetWebSocketClient(_ws);
 
             _ = Task.Run(async () =>

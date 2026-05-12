@@ -138,7 +138,7 @@ public partial class MainWindow : Window
                 },
 
                 // Status text (for login failure messages)
-                _statusText = new TextBlock
+                new TextBlock
                 {
                     Text = "",
                     FontSize = 13,
@@ -148,7 +148,7 @@ public partial class MainWindow : Window
                 },
 
                 // Retry button (hidden by default)
-                _retryButton = new Button
+                new Button
                 {
                     Content = "🔄 Erneut verbinden",
                     FontSize = 14,
@@ -168,8 +168,10 @@ public partial class MainWindow : Window
         var quickActionsBtn = (Button)panel.Children[4];
         quickActionsBtn.Click += OnQuickActions;
 
-        // Retry button
-        _retryButton!.Click += OnRetryClicked;
+        // Status text and retry button references
+        _statusText = (TextBlock)panel.Children[7];
+        _retryButton = (Button)panel.Children[8];
+        _retryButton.Click += OnRetryClicked;
 
         Content = panel;
     }
