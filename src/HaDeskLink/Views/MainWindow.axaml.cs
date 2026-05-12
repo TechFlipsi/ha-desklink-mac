@@ -30,10 +30,13 @@ namespace HaDeskLink.Views;
 /// The dashboard opens in the default browser for now.
 /// A future update will embed the dashboard once WebView2 macOS support improves.
 /// </summary>
-public class MainWindow : Window
+public partial class MainWindow : Window
 {
     private readonly Config _config;
     private readonly HaApiClient _api;
+    private HaWebSocketClient? _ws;
+    private TextBlock? _statusText;
+    private Button? _retryButton;
 
     public MainWindow(Config config, HaApiClient api)
     {
@@ -133,6 +136,27 @@ public class MainWindow : Window
                     Foreground = Brushes.LightGray,
                     Margin = new Thickness(0, 20, 0, 0)
                 },
+
+                // Status text (for login failure messages)
+                _statusText = new TextBlock
+                {
+                    Text = "",
+                    FontSize = 13,
+                    Foreground = Brushes.OrangeRed,
+                    TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                    Margin = new Thickness(0, 10, 0, 0)
+                },
+
+                // Retry button (hidden by default)
+                _retryButton = new Button
+                {
+                    Content = "🔄 Erneut verbinden",
+                    FontSize = 14,
+                    Padding = new Thickness(15, 8),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    CornerRadius = new CornerRadius(8),
+                    IsVisible = false
+                },
             }
         };
 
@@ -144,7 +168,45 @@ public class MainWindow : Window
         var quickActionsBtn = (Button)panel.Children[4];
         quickActionsBtn.Click += OnQuickActions;
 
+        // Retry button
+        _retryButton!.Click += OnRetryClicked;
+
         Content = panel;
+    }
+
+    /// <summary>Set the WebSocket reference so the retry button can reset login blocks.</summary>
+    public void SetWebSocketClient(HaWebSocketClient ws) { _ws = ws; CheckLoginBlock(); }
+
+    /// <summary>Show retry button and error message when login is blocked.</summary>
+    public void CheckLoginBlock()
+    {
+        if (_ws != null && _ws.IsBlocked)
+        {
+            _statusText!.Text = "⛔ Login fehlgeschlagen. Token ungültig.\nBitte überprüfe deinen Home Assistant Token in den Einstellungen.";
+            _retryButton!.IsVisible = true;
+        }
+        else
+        {
+            _statusText!.Text = "";
+            _retryButton!.IsVisible = false;
+        }
+    }
+
+    private async void OnRetryClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_ws == null) return;
+        _ws.ResetLoginBlock();
+        _statusText!.Text = "🔄 Verbindung wird erneut versucht...";
+        _retryButton!.IsVisible = false;
+        // Restart WebSocket connection
+        _ = Task.Run(async () =>
+        {
+            try { await _ws.ConnectAsync(); }
+            catch (Exception ex) { Console.WriteLine($"WebSocket-Fehler: {ex.Message}"); }
+        });
+        // Check status after a delay
+        await Task.Delay(5000);
+        CheckLoginBlock();
     }
 
     private void OnOpenDashboard(object? sender, RoutedEventArgs e)

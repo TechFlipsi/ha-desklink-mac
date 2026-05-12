@@ -77,6 +77,10 @@ public class DeskLinkApp : Application
                 cmd => { try { _ = CommandHandler.ExecuteAsync(cmd); } catch { } }
             );
 
+            // Pass WS to MainWindow for retry button
+            if (desktop.MainWindow is Views.MainWindow mw)
+                mw.SetWebSocketClient(_ws);
+
             _ = Task.Run(async () =>
             {
                 try { await _ws.ConnectAsync(); }

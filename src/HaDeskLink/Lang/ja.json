@@ -59,5 +59,7 @@
   "screenshot_saved": "Screenshot saved",
   "webcam_active": "Webcam Active",
   "notification_action_executed": "Action executed",
-  "ha_desklink_version": "HA DeskLink Version"
+  "ha_desklink_version": "HA DeskLink Version",
+  "login_failed": "ログイン失敗。トークンが無効です。設定でHome Assistantトークンを確認してください。",
+  "retry_connect": "再接続"
 }

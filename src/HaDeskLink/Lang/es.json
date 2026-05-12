@@ -59,5 +59,7 @@
   "screenshot_saved": "Screenshot saved",
   "webcam_active": "Webcam Active",
   "notification_action_executed": "Action executed",
-  "ha_desklink_version": "HA DeskLink Version"
+  "ha_desklink_version": "HA DeskLink Version",
+  "login_failed": "Error de inicio de sesión. Token no válido. Verifica tu token de Home Assistant en la configuración.",
+  "retry_connect": "Reintentar conexión"
 }

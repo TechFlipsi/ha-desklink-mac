@@ -39,6 +39,17 @@ public class HaWebSocketClient : IDisposable
 
     public bool IsConnected => _connected;
 
+    private int _authFailCount;
+    private const int MaxAuthFailures = 3;
+    /// <summary>Whether retries are blocked due to too many login failures.</summary>
+    public bool IsBlocked => _authFailCount >= MaxAuthFailures;
+    /// <summary>Reset the login block so the WebSocket can attempt to reconnect.</summary>
+    public void ResetLoginBlock()
+    {
+        _authFailCount = 0;
+        _connected = false;
+    }
+
     public HaWebSocketClient(string haUrl, string token, string webhookId, object? trayIcon, Action<string>? onCommand = null)
     {
         _haUrl = haUrl.TrimEnd('/');
@@ -54,6 +65,14 @@ public class HaWebSocketClient : IDisposable
 
         while (!_cts.Token.IsCancellationRequested)
         {
+            // Check if login is blocked before attempting connection
+            if (IsBlocked)
+            {
+                Console.WriteLine($"⛔ Login blockiert nach {MaxAuthFailures} fehlgeschlagenen Versuchen. Token zurücksetzen oder Einstellungen prüfen.");
+                await Task.Delay(60000, _cts.Token);
+                continue;
+            }
+
             try
             {
                 _ws = new ClientWebSocket();
@@ -68,8 +87,18 @@ public class HaWebSocketClient : IDisposable
 
                 msg = await ReceiveMessage();
                 if (msg == null || !msg.Contains("auth_ok"))
-                    throw new Exception("Auth failed");
+                {
+                    // Auth failed – this is likely an invalid token
+                    _authFailCount++;
+                    if (_authFailCount >= MaxAuthFailures)
+                    {
+                        Console.WriteLine($"⛔ {MaxAuthFailures} fehlgeschlagene Login-Versuche. Verbindung gestoppt. Bitte Token in Einstellungen prüfen.");
+                    }
+                    throw new Exception("Auth failed: " + (msg ?? "no response"));
+                }
 
+                // Auth succeeded – reset failure count
+                _authFailCount = 0;
                 _connected = true;
 
                 await SendMessage(new
