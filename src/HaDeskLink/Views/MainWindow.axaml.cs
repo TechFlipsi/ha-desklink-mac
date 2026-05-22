@@ -309,6 +309,36 @@ public partial class MainWindow : Window
 
             foreach (var action in actions)
             {
+                var entityDot = new Border
+                {
+                    Width = 8, Height = 8,
+                    Background = HighlightBrush,
+                    CornerRadius = new CornerRadius(4),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 12, 0)
+                };
+                Grid.SetColumn(entityDot, 0);
+
+                var nameText = new TextBlock
+                {
+                    Text = action.Name,
+                    FontSize = 14,
+                    Foreground = Brushes.White,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                Grid.SetColumn(nameText, 1);
+
+                var toggleBtn = new Button
+                {
+                    Content = "⏻",
+                    FontSize = 16,
+                    Background = AccentBrush, Foreground = Brushes.White,
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(10, 4),
+                    Tag = action
+                };
+                Grid.SetColumn(toggleBtn, 2);
+
                 var card = new Border
                 {
                     Background = PanelBrush,
@@ -318,33 +348,23 @@ public partial class MainWindow : Window
                     Child = new Grid
                     {
                         ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto"),
-                        Children =
-                        {
-                            new Border { Width = 8, Height = 8, Background = HighlightBrush, CornerRadius = new CornerRadius(4), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) }.WithGridColumn(0),
-                            new TextBlock { Text = action.Name, FontSize = 14, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center }.WithGridColumn(1),
-                            new Button { Content = "⏻", FontSize = 16, Background = AccentBrush, Foreground = Brushes.White, CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 4), Tag = action }.WithGridColumn(2)
-                        }
+                        Children = { entityDot, nameText, toggleBtn }
                     }
                 };
 
-                var grid = (Grid)card.Child!;
-                var toggleBtn = grid.Children.OfType<Button>().FirstOrDefault();
-                if (toggleBtn != null)
+                toggleBtn.Click += async (s, args) =>
                 {
-                    toggleBtn.Click += async (s, args) =>
-                    {
-                        var b = s as Button;
-                        var a = b?.Tag as QuickActionItem;
-                        if (a == null) return;
-                        b!.Background = HighlightBrush;
-                        b.Content = "⏳";
-                        try { await _api.ToggleEntityAsync(a.EntityId); b.Content = "✓"; b.Background = SuccessBrush; }
-                        catch { b.Content = "✗"; b.Background = HighlightBrush; }
-                        await Task.Delay(1200);
-                        b.Content = "⏻";
-                        b.Background = AccentBrush;
-                    };
-                }
+                    var b = s as Button;
+                    var a = b?.Tag as QuickActionItem;
+                    if (a == null) return;
+                    b!.Background = HighlightBrush;
+                    b.Content = "⏳";
+                    try { await _api.ToggleEntityAsync(a.EntityId); b.Content = "✓"; b.Background = SuccessBrush; }
+                    catch { b.Content = "✗"; b.Background = HighlightBrush; }
+                    await Task.Delay(1200);
+                    b.Content = "⏻";
+                    b.Background = AccentBrush;
+                };
                 actionPanel.Children.Add(card);
             }
 

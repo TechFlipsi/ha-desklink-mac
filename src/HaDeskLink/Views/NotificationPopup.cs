@@ -10,6 +10,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace HaDeskLink.Views;
 
@@ -21,10 +22,8 @@ public class NotificationPopup : Window
     private readonly DispatcherTimer? _autoCloseTimer;
     private bool _isClosing;
 
-    private static readonly IBrush BgBrush = new SolidColorBrush(Color.FromArgb(255, 26, 26, 46));
     private static readonly IBrush PanelBrush = new SolidColorBrush(Color.FromArgb(255, 22, 33, 62));
     private static readonly IBrush AccentBrush = new SolidColorBrush(Color.FromArgb(255, 15, 52, 96));
-    private static readonly IBrush HighlightBrush = new SolidColorBrush(Color.FromArgb(255, 233, 69, 96));
     private static readonly IBrush HaBlueBrush = new SolidColorBrush(Color.FromArgb(255, 66, 133, 244));
     private static readonly IBrush GrayBrush = new SolidColorBrush(Color.FromArgb(255, 140, 140, 160));
 
@@ -42,6 +41,12 @@ public class NotificationPopup : Window
 
         actions ??= new List<NotificationActionInfo>();
 
+        var accentBar = new Border { Background = HaBlueBrush, CornerRadius = new CornerRadius(12, 0, 0, 12) };
+        Grid.SetColumn(accentBar, 0);
+
+        var contentStack = new StackPanel { Margin = new Thickness(16, 14, 14, 14), Spacing = 8, Children = BuildContentChildren(title, message, actions) };
+        Grid.SetColumn(contentStack, 1);
+
         var card = new Border
         {
             Background = PanelBrush,
@@ -52,11 +57,7 @@ public class NotificationPopup : Window
             Child = new Grid
             {
                 ColumnDefinitions = ColumnDefinitions.Parse("4,*"),
-                Children =
-                {
-                    new Border { Background = HaBlueBrush, CornerRadius = new CornerRadius(12, 0, 0, 12) }.WithGridColumn(0),
-                    new StackPanel { Margin = new Thickness(16, 14, 14, 14), Spacing = 8, Children = BuildContentChildren(title, message, actions) }.WithGridColumn(1)
-                }
+                Children = { accentBar, contentStack }
             }
         };
 
@@ -74,19 +75,14 @@ public class NotificationPopup : Window
     {
         var children = new List<Control>();
 
-        var headerGrid = new Grid
-        {
-            ColumnDefinitions = ColumnDefinitions.Parse("*,Auto"),
-            Children =
-            {
-                new TextBlock { Text = title, FontSize = 15, FontWeight = FontWeight.Bold, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap }.WithGridColumn(0),
-                new Button { Content = "✕", FontSize = 14, Background = Brushes.Transparent, Foreground = GrayBrush, Padding = new Thickness(4, 2), CornerRadius = new CornerRadius(4), VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Right }.WithGridColumn(1)
-            }
-        };
-        children.Add(headerGrid);
+        var titleText = new TextBlock { Text = title, FontSize = 15, FontWeight = FontWeight.Bold, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
+        Grid.SetColumn(titleText, 0);
+        var closeBtn = new Button { Content = "✕", FontSize = 14, Background = Brushes.Transparent, Foreground = GrayBrush, Padding = new Thickness(4, 2), CornerRadius = new CornerRadius(4), VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Right };
+        Grid.SetColumn(closeBtn, 1);
+        closeBtn.Click += (s, e) => CloseAnimated();
 
-        var closeBtn = headerGrid.Children.OfType<Button>().FirstOrDefault();
-        if (closeBtn != null) closeBtn.Click += (s, e) => CloseAnimated();
+        var headerGrid = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("*,Auto"), Children = { titleText, closeBtn } };
+        children.Add(headerGrid);
 
         children.Add(new TextBlock { Text = message, FontSize = 13, Foreground = new SolidColorBrush(Color.FromArgb(255, 200, 200, 215)), TextWrapping = TextWrapping.Wrap, MaxLines = 5 });
         children.Add(new TextBlock { Text = DateTime.Now.ToString("HH:mm"), FontSize = 11, Foreground = GrayBrush, HorizontalAlignment = HorizontalAlignment.Right });
