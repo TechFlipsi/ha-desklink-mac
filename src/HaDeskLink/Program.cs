@@ -81,8 +81,7 @@ static class Program
         => AppBuilder.Configure<DeskLinkApp>()
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace()
-            .UseDesktopWebView();
+            .LogToTrace();
 
     public static string LogFile()
     {

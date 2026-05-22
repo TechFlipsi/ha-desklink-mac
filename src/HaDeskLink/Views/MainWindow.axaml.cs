@@ -237,16 +237,9 @@ public partial class MainWindow : Window
 
     private void OnOpenDashboard(object? sender, RoutedEventArgs e)
     {
-        if (AuthGuard.ValidateTokenFormat(_config.HaToken))
-        {
-            var dashboard = new DashboardWindow(_config.HaUrl, _config.HaToken);
-            dashboard.Show();
-        }
-        else
-        {
-            try { Process.Start(new ProcessStartInfo { FileName = _config.HaUrl, UseShellExecute = true }); }
-            catch (Exception ex) { Console.WriteLine($"Fehler beim Öffnen: {ex.Message}"); }
-        }
+        // macOS: Open in default browser (no embedded WebView available for Avalonia 11.2)
+        try { Process.Start(new ProcessStartInfo { FileName = _config.HaUrl, UseShellExecute = true }); }
+        catch (Exception ex) { Console.WriteLine($"Fehler beim Öffnen: {ex.Message}"); }
     }
 
     private static string GetVersion()
