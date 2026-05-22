@@ -31,6 +31,7 @@ public class HaWebSocketClient : IDisposable
     private readonly string _token;
     private readonly string _webhookId;
     private readonly Action<string>? _onCommand;
+    private readonly bool _verifySsl;
     private ClientWebSocket? _ws;
     private CancellationTokenSource? _cts;
     private bool _disposed;
@@ -50,18 +51,18 @@ public class HaWebSocketClient : IDisposable
         _connected = false;
     }
 
-    public HaWebSocketClient(string haUrl, string token, string webhookId, object? trayIcon, Action<string>? onCommand = null)
+    public HaWebSocketClient(string haUrl, string token, string webhookId, object? trayIcon, Action<string>? onCommand = null, bool verifySsl = true)
     {
         _haUrl = haUrl.TrimEnd('/');
         _token = token;
         _webhookId = webhookId;
         _onCommand = onCommand;
+        _verifySsl = verifySsl;
     }
 
     public async Task ConnectAsync()
     {
         _cts = new CancellationTokenSource();
-        var wsUrl = _haUrl.Replace("https://", "wss://").Replace("http://", "ws://") + "/api/websocket";
 
         while (!_cts.Token.IsCancellationRequested)
         {
@@ -76,7 +77,14 @@ public class HaWebSocketClient : IDisposable
             try
             {
                 _ws = new ClientWebSocket();
-                _ws.Options.RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true;
+                if (!_verifySsl)
+                {
+                    _ws.Options.RemoteCertificateValidationCallback = (sender, cert, chain, errors) => true;
+                }
+                // Build WebSocket URL properly using Uri class
+                var uri = new Uri(_haUrl);
+                var wsScheme = uri.Scheme == "https" ? "wss" : "ws";
+                var wsUrl = $"{wsScheme}://{uri.Authority}/api/websocket";
                 await _ws.ConnectAsync(new Uri(wsUrl), _cts.Token);
 
                 var msg = await ReceiveMessage();
@@ -131,7 +139,7 @@ public class HaWebSocketClient : IDisposable
     private async Task<string?> ReceiveMessage()
     {
         if (_ws?.State != WebSocketState.Open) return null;
-        var buffer = new byte[16384];
+        var buffer = new byte[65536];
         var sb = new StringBuilder();
         WebSocketReceiveResult result;
         do

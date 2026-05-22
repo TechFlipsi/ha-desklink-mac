@@ -34,7 +34,7 @@ public class HaApiClient
         ? $"{_haUrl}/api/webhook/{_webhookId}"
         : _cloudUrl;
 
-    public HaApiClient(string configDir, bool verifySsl = false)
+    public HaApiClient(string configDir, bool verifySsl = true)
     {
         _configDir = configDir;
         var handler = new HttpClientHandler
@@ -314,6 +314,6 @@ public class HaApiClient
             if (File.Exists(vfile)) return File.ReadAllText(vfile).Trim();
         }
         catch { }
-        return "2.2.1";
+        return "3.0.3";
     }
 }

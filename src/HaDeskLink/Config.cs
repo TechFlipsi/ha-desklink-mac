@@ -31,7 +31,7 @@ public class Config
 
     public string HaUrl { get; set; } = "";
     public string HaToken { get; set; } = "";
-    public bool VerifySsl { get; set; } = false;
+    public bool VerifySsl { get; set; } = true;
     public int SensorInterval { get; set; } = 30;
     public string UpdateChannel { get; set; } = "stable";
     public string Language { get; set; } = "de";
@@ -50,17 +50,26 @@ public class Config
     {
         try
         {
+            // Pipe token via stdin to avoid exposing it in `ps aux`
             var psi = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = "security",
-                Arguments = $"add-generic-password -a ha-desklink -s ha-desklink-token -w {EscapeShellArg(token)} -U",
+                Arguments = "add-generic-password -a ha-desklink -s ha-desklink-token -w -U",
                 UseShellExecute = false,
                 CreateNoWindow = true,
+                RedirectStandardInput = true,
                 RedirectStandardError = true
             };
-            var proc = System.Diagnostics.Process.Start(psi);
-            proc?.WaitForExit(5000);
-            return proc?.ExitCode == 0;
+            using var proc = System.Diagnostics.Process.Start(psi);
+            if (proc == null) return false;
+            proc.StandardInput.WriteLine(token);
+            proc.StandardInput.Close();
+            // Read stderr BEFORE WaitForExit to prevent deadlock
+            var stderr = proc.StandardError.ReadToEnd();
+            proc.WaitForExit(5000);
+            if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
+                Console.WriteLine($"[Keychain] Store failed: {stderr.Trim()}");
+            return proc.ExitCode == 0;
         }
         catch { return false; }
     }
@@ -107,7 +116,9 @@ public class Config
         RandomNumberGenerator.Fill(key);
         Directory.CreateDirectory(ConfigDir);
         File.WriteAllText(keyPath, Convert.ToBase64String(key));
-        try { System.Diagnostics.Process.Start("chmod", $"600 {keyPath}")?.WaitForExit(2000); } catch { }
+#pragma warning disable CA1416
+        try { File.SetUnixFileMode(keyPath, System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite); } catch { }
+#pragma warning restore CA1416
         return key;
     }
 
@@ -117,7 +128,7 @@ public class Config
         var key = GetOrCreateKey();
         var plainBytes = Encoding.UTF8.GetBytes(plainText);
 
-        using var aes = new AesGcm(key);
+        using var aes = new AesGcm(key, 16);
         var nonce = new byte[AesGcm.NonceByteSizes.MaxSize];
         RandomNumberGenerator.Fill(nonce);
         var ciphertext = new byte[plainBytes.Length];
@@ -151,7 +162,7 @@ public class Config
             Buffer.BlockCopy(combined, nonceSize, tag, 0, tagSize);
             Buffer.BlockCopy(combined, nonceSize + tagSize, ciphertext, 0, ciphertext.Length);
 
-            using var aes = new AesGcm(key);
+            using var aes = new AesGcm(key, 16);
             var plainBytes = new byte[ciphertext.Length];
             aes.Decrypt(nonce, ciphertext, tag, plainBytes);
             return Encoding.UTF8.GetString(plainBytes);
@@ -245,6 +256,11 @@ public class Config
 
         var json = JsonSerializer.Serialize(saveConfig, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(ConfigPath, json);
+
+        // Secure config file permissions (macOS)
+#pragma warning disable CA1416
+        try { File.SetUnixFileMode(ConfigPath, System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite); } catch { }
+#pragma warning restore CA1416
     }
 
     public static string GetConfigDir() => ConfigDir;

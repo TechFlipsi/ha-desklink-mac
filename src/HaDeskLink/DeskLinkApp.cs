@@ -74,7 +74,8 @@ public class DeskLinkApp : Application
                 config.HaToken,
                 webhookId,
                 null,
-                cmd => { try { _ = CommandHandler.ExecuteAsync(cmd); } catch { } }
+                cmd => { try { _ = CommandHandler.ExecuteAsync(cmd); } catch { } },
+                verifySsl: config.VerifySsl
             );
 
             // Pass WS to MainWindow for retry button

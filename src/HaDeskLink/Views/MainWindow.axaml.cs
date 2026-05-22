@@ -235,7 +235,7 @@ public partial class MainWindow : Window
             if (System.IO.File.Exists(vfile)) return System.IO.File.ReadAllText(vfile).Trim();
         }
         catch { }
-        return "2.2.1";
+        return "3.0.3";
     }
 
     private async void OnQuickActions(object? sender, RoutedEventArgs e)
@@ -279,7 +279,8 @@ public partial class MainWindow : Window
             };
             btn.Click += async (s, args) =>
             {
-                var a = (QuickActionItem)((Button)s).Tag!;
+                var a = (s as Button)?.Tag as QuickActionItem;
+                if (a == null) return;
                 try
                 {
                     await _api.ToggleEntityAsync(a.EntityId);

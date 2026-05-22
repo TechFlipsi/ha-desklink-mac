@@ -287,10 +287,11 @@ public static class SensorManager
     {
         try
         {
+            // Get vm_stat and hw.memsize in one call, also get vm.page_pageable_internal_count for page size
             var psi = new ProcessStartInfo
             {
                 FileName = "bash",
-                Arguments = "-c \"vm_stat | head -10; echo '---'; sysctl -n hw.memsize\"",
+                Arguments = "-c \"vm_stat | head -15; echo '---'; sysctl -n hw.memsize; echo '---'; sysctl -n hw.pagesize\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
@@ -302,7 +303,7 @@ public static class SensorManager
 
             ulong freePages = 0, inactivePages = 0;
             ulong totalMemory = 0;
-            const int pageSize = 16384; // Apple Silicon: 16KB pages
+            ulong pageSize = 16384; // default Apple Silicon, dynamically resolved below
 
             foreach (var line in output.Split('\n'))
             {
@@ -312,17 +313,23 @@ public static class SensorManager
                     inactivePages = ParseUlong(line.Split(':')[1].Trim().Trim('.'));
             }
 
-            // Parse hw.memsize (after --- separator)
+            // Parse sections: vm_stat --- hw.memsize --- hw.pagesize
             var sections = output.Split("---");
             if (sections.Length > 1)
             {
                 var memStr = sections[1].Trim();
                 totalMemory = ParseUlong(memStr);
             }
+            if (sections.Length > 2)
+            {
+                var psStr = sections[2].Trim();
+                var parsedPs = ParseUlong(psStr);
+                if (parsedPs > 0) pageSize = parsedPs;
+            }
 
             if (totalMemory > 0)
             {
-                var freeMemory = (freePages + inactivePages) * (ulong)pageSize;
+                var freeMemory = (freePages + inactivePages) * pageSize;
                 var usedPercent = (1f - (float)freeMemory / totalMemory) * 100f;
                 return ((float)Math.Round(usedPercent, 1), (float)Math.Round((float)freeMemory / 1024 / 1024 / 1024, 1));
             }
@@ -832,11 +839,11 @@ public static class SensorManager
     {
         try
         {
-            // Check if any process has a camera device open via lsof
+            // Check for camera activity via ioreg (more reliable than lsof on macOS)
             var psi = new ProcessStartInfo
             {
-                FileName = "lsof",
-                Arguments = "-c",
+                FileName = "bash",
+                Arguments = "-c \"ioreg -r -c IOAVDevice 2>/dev/null | grep -i camera; ioreg -r -w0 -c AppleCamera 2>/dev/null | head -5\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true
@@ -846,9 +853,9 @@ public static class SensorManager
             var output = proc.StandardOutput.ReadToEnd();
             proc.WaitForExit(3000);
 
-            // Check for camera-related devices in lsof output
-            if (output.Contains("Camera") || output.Contains("VDC") || output.Contains("coremediaio"))
-                return true;
+            if (string.IsNullOrWhiteSpace(output)) return false;
+            // Check if camera device shows active state
+            return output.Contains("Camera") || output.Contains("VDC") || output.Contains("coremediaio");
         }
         catch { }
 
