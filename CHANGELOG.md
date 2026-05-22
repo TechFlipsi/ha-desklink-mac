@@ -1,5 +1,14 @@
 # Changelog
 
+## [v3.1.0] - 2026-05-23
+- 🌐 **Eingebettetes Dashboard:** NativeWebView zeigt HA direkt in der App (wie Handy-App!)
+- 🔑 **Auto-Login:** Long-Lived Access Token → automatischer Login via `external_auth` API
+- 🛡️ **Auth-Schutz:** Max 3 Versuche → Pause 30s → Exponential Backoff → Stopp. **Kein IP-Ban-Risiko!**
+- 🎨 **Modernes Dark-UI-Redesign:** Alle Dialoge (Setup, Quick Actions, Notifications) komplett neu
+- 🔔 **NotificationPopup:** Schwebende HA-Benachrichtigungen mit Aktions-Buttons, Auto-Dismiss
+- ⚡ **Quick Actions:** Karten-Design mit Toggle-Indikator und Animations
+- ⚙️ **Setup-Dialog:** Sections, Token-Anzeige/Verbergen, Klapp-Hilfe, Versuchszähler
+
 ## [v3.0.2] - 2026-05-12
 - 🔒 **Login-Retry-Limit:** Nach 3 fehlgeschlagenen Token-Logins wird die Verbindung gestoppt (verhindert HA IP-Ban)
 - 🔄 **Retry-Button:** Manuelles Neuverbinden nach Token-Korrektur über Einstellungen

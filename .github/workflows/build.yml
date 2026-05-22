@@ -106,6 +106,10 @@ jobs:
           body: |
             HA DeskLink macOS v${{ steps.version.outputs.VERSION }}
 
+            🌐 **Eingebettetes Dashboard** — HA direkt in der App via WebView + Auto-Login!
+            🛡️ **IP-Ban-Schutz** — Max. 3 Login-Versuche, dann Pause. Kein Risiko für deine HA-Instanz.
+            🎨 **Modernes Dark-UI** — Alle Dialoge komplett neu gestaltet.
+
             ⚠️ **COMMUNITY TEST VERSION – NICHT VOM ENTWICKLER GETESTET!** ⚠️
 
             Diese Version wurde ohne Mac-Hardware erstellt und ist auf Community-Testing angewiesen.
@@ -117,12 +121,14 @@ jobs:
             3. `HA_DeskLink` starten
 
             ## Features
+            - 🌐 Dashboard in der App via WebView + Auto-Login (external_auth API)
+            - 🛡️ Auth-Schutz: Max 3 Login-Versuche, Backoff, kein IP-Ban-Risiko
             - CPU-Temperatur & Auslastung, RAM, Akku, Festplatte
             - Vollbild-Sensor, Monitor-Layout, Helligkeit
             - Mehrsprachigkeit (de, en, es, fr, zh, ja)
             - HA Token verschlüsselt (Keychain + AES-GCM)
-            - Dashboard öffnet HA im Browser
             - Push-Benachrichtigungen via WebSocket
+            - 🔔 Modernes NotificationPopup mit Aktions-Buttons
 
       - name: Discord Release Notification
         if: always()
