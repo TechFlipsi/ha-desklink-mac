@@ -27,6 +27,10 @@ namespace HaDeskLink;
 /// </summary>
 public static class SensorManager
 {
+    // Network speed tracking fields
+    private static long _prevNetBytesIn;
+    private static long _prevNetBytesOut;
+    private static DateTime _prevNetTime = DateTime.MinValue;
     public static List<SensorData> GetAllSensors()
     {
         var sensors = new List<SensorData>();
@@ -34,17 +38,17 @@ public static class SensorManager
         // CPU Temperature
         var cpuTemp = GetCpuTemperature();
         if (cpuTemp.HasValue)
-            sensors.Add(new SensorData("cpu_temp", "CPU Temperatur", cpuTemp.Value, "°C", "temperature", "mdi:thermometer", "measurement"));
+            sensors.Add(new SensorData("cpu_temperature", "CPU Temperature", cpuTemp.Value, "°C", "temperature", "mdi:thermometer", "measurement"));
 
         // CPU Usage
         var cpuUsage = GetCpuUsage();
         if (cpuUsage.HasValue)
-            sensors.Add(new SensorData("cpu_usage", "CPU Auslastung", cpuUsage.Value, "%", "", "mdi:cpu-64-bit", "measurement"));
+            sensors.Add(new SensorData("cpu_percent", "CPU Usage", cpuUsage.Value, "%", "", "mdi:cpu-64-bit", "measurement"));
 
         // Memory
         var (memPercent, memAvail) = GetMemory();
         if (memPercent.HasValue)
-            sensors.Add(new SensorData("memory", "RAM Auslastung", memPercent.Value, "%", "", "mdi:memory", "measurement"));
+            sensors.Add(new SensorData("memory_percent", "Memory Usage", memPercent.Value, "%", "", "mdi:memory", "measurement"));
         if (memAvail.HasValue)
             sensors.Add(new SensorData("memory_available", "RAM Verfügbar", memAvail.Value, "GB", "", "mdi:memory", "measurement"));
 
@@ -67,7 +71,7 @@ public static class SensorManager
         // Disk usage for root volume
         var diskPercent = GetDiskUsage();
         if (diskPercent.HasValue)
-            sensors.Add(new SensorData("disk_usage", "Festplatte", diskPercent.Value, "%", "", "mdi:harddisk", "measurement"));
+            sensors.Add(new SensorData("disk_root_percent", "Disk / Usage", diskPercent.Value, "%", "", "mdi:harddisk", "measurement"));
 
         // Uptime
         var uptime = GetUptime();
@@ -120,6 +124,45 @@ public static class SensorManager
         // Webcam active
         var webcamActive = GetWebcamActive();
         sensors.Add(new SensorData("webcam_active", Localization.Get("webcam_active", "Webcam Aktiv"), webcamActive ? "on" : "off", "", "", "mdi:webcam"));
+
+        // Idle time
+        var idleTime = GetIdleTime();
+        if (idleTime.HasValue)
+            sensors.Add(new SensorData("idle_time", "Inaktivität", idleTime.Value, "s", "", "mdi:timer-outline", "measurement"));
+
+        // Audio volume
+        var audioVolume = GetAudioVolume();
+        if (audioVolume.HasValue)
+            sensors.Add(new SensorData("audio_volume", "Lautstärke", audioVolume.Value, "%", "", "mdi:volume-high", "measurement"));
+
+        // Audio mute
+        var audioMute = GetAudioMute();
+        sensors.Add(new SensorData("audio_mute", "Stummschaltung", audioMute, "", "plug", "mdi:volume-off"));
+
+        // Microphone active
+        var micActive = GetMicActive();
+        sensors.Add(new SensorData("mic_active", "Mikrofon Aktiv", micActive, "", "plug", "mdi:microphone"));
+
+        // GPU load (Apple Silicon only)
+        var gpuLoad = GetGpuLoad();
+        if (gpuLoad.HasValue)
+            sensors.Add(new SensorData("gpu_load", "GPU Auslastung", gpuLoad.Value, "%", "", "mdi:gpu", "measurement"));
+
+        // CPU clock
+        var cpuClock = GetCpuClock();
+        if (cpuClock.HasValue)
+            sensors.Add(new SensorData("cpu_clock", "CPU Takt", cpuClock.Value, "MHz", "", "mdi:clock-outline", "measurement"));
+
+        // Connectivity
+        var connectivity = GetConnectivity();
+        sensors.Add(new SensorData("connectivity", "Internetverbindung", connectivity, "", "connectivity", "mdi:check-network"));
+
+        // Network upload/download
+        var (netUp, netDown) = GetNetworkSpeed();
+        if (netUp.HasValue)
+            sensors.Add(new SensorData("network_upload", "Netzwerk Upload", netUp.Value, "KB/s", "", "mdi:upload", "measurement"));
+        if (netDown.HasValue)
+            sensors.Add(new SensorData("network_download", "Netzwerk Download", netDown.Value, "KB/s", "", "mdi:download", "measurement"));
 
         // App version
         var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
@@ -881,6 +924,317 @@ public static class SensorManager
         catch { }
 
         return false;
+    }
+
+    #endregion
+
+    #region Idle Time, Audio, Mic, GPU Load, CPU Clock, Connectivity, Network Speed
+
+    private static double? GetIdleTime()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "osascript",
+                Arguments = "-e 'tell application \"System Events\" to get idle time'",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } }
+
+            if (double.TryParse(output, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out var seconds))
+                return Math.Round(seconds, 1);
+        }
+        catch { }
+        return null;
+    }
+
+    private static int? GetAudioVolume()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "osascript",
+                Arguments = "-e 'output volume of (get volume settings)'",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } }
+
+            if (int.TryParse(output, out var volume))
+                return Math.Clamp(volume, 0, 100);
+        }
+        catch { }
+        return null;
+    }
+
+    private static string GetAudioMute()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "osascript",
+                Arguments = "-e 'output muted of (get volume settings)'",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return "off";
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } }
+
+            // output muted returns "true" or "false" — "true" means muted (on)
+            return output.Equals("true", StringComparison.OrdinalIgnoreCase) ? "on" : "off";
+        }
+        catch { }
+        return "off";
+    }
+
+    private static string GetMicActive()
+    {
+        try
+        {
+            // Check if any process is using the microphone via lsof
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"lsof /dev/audio* 2>/dev/null | grep -v COMMAND | head -1; lsof 2>/dev/null | grep -i 'coreaudio' | grep -i 'mic' | head -1\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return "off";
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } }
+
+            if (!string.IsNullOrEmpty(output))
+                return "on";
+        }
+        catch { }
+
+        try
+        {
+            // Fallback: check input volume via osascript
+            var psi = new ProcessStartInfo
+            {
+                FileName = "osascript",
+                Arguments = "-e 'input volume of (get volume settings)'",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return "off";
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } }
+
+            if (int.TryParse(output, out var inputVol) && inputVol > 0)
+            {
+                // Input volume > 0 suggests mic might be active, but also check for active audio streams
+                var psi2 = new ProcessStartInfo
+                {
+                    FileName = "bash",
+                    Arguments = "-c \"ioreg -r -c IOAudioEngineState 2>/dev/null | grep -i 'input' | head -3\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true
+                };
+                var proc2 = Process.Start(psi2);
+                if (proc2 == null) return "off";
+                var output2 = proc2.StandardOutput.ReadToEnd().Trim();
+                if (!proc2.WaitForExit(3000)) { try { proc2.Kill(); } catch { } }
+
+                if (!string.IsNullOrEmpty(output2))
+                    return "on";
+            }
+        }
+        catch { }
+        return "off";
+    }
+
+    private static float? GetGpuLoad()
+    {
+        try
+        {
+            // Try ioreg PerformanceStatistics — available on Apple Silicon
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"ioreg -l -w0 | grep 'PerformanceStatistics' | head -1\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } }
+
+            if (!string.IsNullOrEmpty(output))
+            {
+                // PerformanceStatistics contains entries like \"GPU Core Utilization\"=xxx
+                var match = System.Text.RegularExpressions.Regex.Match(output,
+                    @"""GPU Core Utilization""[^=]*=[^0-9]*(\d+)");
+                if (match.Success && int.TryParse(match.Groups[1].Value, out var utilization))
+                    return utilization;
+
+                // Alternative: look for \"Device Utilization %\" (Intel GPU)
+                match = System.Text.RegularExpressions.Regex.Match(output,
+                    @"""Device Utilization %""[^=]*=[^0-9]*(\d+)");
+                if (match.Success && int.TryParse(match.Groups[1].Value, out var devUtil))
+                    return devUtil;
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    private static float? GetCpuClock()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "sysctl",
+                Arguments = "-n hw.cpufrequency",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return null;
+            var output = proc.StandardOutput.ReadToEnd().Trim();
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } }
+
+            if (long.TryParse(output, out var freqHz) && freqHz > 0)
+                return (float)Math.Round(freqHz / 1_000_000.0, 0);
+
+            // Fallback: try hw.cpufrequency_hz
+            proc?.Dispose();
+            psi = new ProcessStartInfo
+            {
+                FileName = "sysctl",
+                Arguments = "-n hw.cpufrequency_hz",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            proc = Process.Start(psi);
+            if (proc == null) return null;
+            output = proc.StandardOutput.ReadToEnd().Trim();
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } }
+
+            if (long.TryParse(output, out freqHz) && freqHz > 0)
+                return (float)Math.Round(freqHz / 1_000_000.0, 0);
+        }
+        catch { }
+        return null;
+    }
+
+    private static string GetConnectivity()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "ping",
+                Arguments = "-c 1 -t 2 8.8.8.8",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return "off";
+            proc.WaitForExit(5000);
+            return proc.ExitCode == 0 ? "on" : "off";
+        }
+        catch { }
+        return "off";
+    }
+
+    private static (float? uploadKBps, float? downloadKBps) GetNetworkSpeed()
+    {
+        try
+        {
+            // Get network bytes from netstat
+            var psi = new ProcessStartInfo
+            {
+                FileName = "bash",
+                Arguments = "-c \"netstat -ib | grep -v 'Name' | grep -v '^$' | awk '{print $1, $7, $10}'\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(psi);
+            if (proc == null) return (null, null);
+            var output = proc.StandardOutput.ReadToEnd();
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } }
+
+            long totalBytesIn = 0, totalBytesOut = 0;
+
+            foreach (var line in output.Split('\n'))
+            {
+                var trimmed = line.Trim();
+                if (string.IsNullOrEmpty(trimmed)) continue;
+
+                var parts = trimmed.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 3)
+                {
+                    // parts[0] = interface name, parts[1] = Ibytes (in), parts[2] = Obytes (out)
+                    // Skip lo0 (loopback)
+                    var iface = parts[0];
+                    if (iface.StartsWith("lo")) continue;
+
+                    if (long.TryParse(parts[1], out var bytesIn))
+                        totalBytesIn += bytesIn;
+                    if (long.TryParse(parts[2], out var bytesOut))
+                        totalBytesOut += bytesOut;
+                }
+            }
+
+            var now = DateTime.UtcNow;
+
+            float? uploadKBps = null;
+            float? downloadKBps = null;
+
+            if (_prevNetTime != DateTime.MinValue)
+            {
+                var elapsed = (now - _prevNetTime).TotalSeconds;
+                if (elapsed > 0 && elapsed < 600) // protect against unrealistic gaps
+                {
+                    var deltaIn = totalBytesIn - _prevNetBytesIn;
+                    var deltaOut = totalBytesOut - _prevNetBytesOut;
+
+                    if (deltaIn >= 0)
+                        downloadKBps = (float)Math.Round(deltaIn / 1024.0 / elapsed, 1);
+                    if (deltaOut >= 0)
+                        uploadKBps = (float)Math.Round(deltaOut / 1024.0 / elapsed, 1);
+                }
+            }
+
+            _prevNetBytesIn = totalBytesIn;
+            _prevNetBytesOut = totalBytesOut;
+            _prevNetTime = now;
+
+            return (uploadKBps, downloadKBps);
+        }
+        catch { }
+        return (null, null);
     }
 
     #endregion

@@ -35,21 +35,33 @@ public static class CommandHandler
                 Run("osascript", "-e 'tell app \"System Events\" to restart'");
                 break;
             case "hibernate":
-            case "sleep":
                 Run("osascript", "-e 'tell app \"System Events\" to sleep'");
                 break;
+            case "sleep":
+                Run("pmset", "sleepnow");
+                break;
             case "lock":
-                // macOS: lock screen via CGSession
+            case "lock_screen":
                 Run("/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession", "-suspend");
                 break;
             case "mute":
-                Run("osascript", "-e 'set volume output muted true'");
+            case "volume_mute":
+                Run("osascript", "-e 'set volume output muted to (not output muted of (get volume settings))'");
                 break;
             case "volume_up":
-                Run("osascript", "-e 'set volume output volume (output volume of (get volume settings) + 10)'");
+                Run("osascript", "-e 'set volume output volume (output volume of (get volume settings) + 5)'");
                 break;
             case "volume_down":
-                Run("osascript", "-e 'set volume output volume (output volume of (get volume settings) - 10)'");
+                Run("osascript", "-e 'set volume output volume (output volume of (get volume settings) - 5)'");
+                break;
+            case "media_play_pause":
+                Run("osascript", "-e 'tell application \"Music\" to playpause'");
+                break;
+            case "media_next":
+                Run("osascript", "-e 'tell application \"Music\" to next track'");
+                break;
+            case "media_previous":
+                Run("osascript", "-e 'tell application \"Music\" to previous track'");
                 break;
             case "monitor_off":
                 Run("pmset", "displaysleepnow");
