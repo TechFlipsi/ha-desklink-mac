@@ -1,13 +1,14 @@
 # Changelog
 
-## [v3.1.0] - 2026-05-23
-- 🌐 **Eingebettetes Dashboard:** NativeWebView zeigt HA direkt in der App (wie Handy-App!)
-- 🔑 **Auto-Login:** Long-Lived Access Token → automatischer Login via `external_auth` API
-- 🛡️ **Auth-Schutz:** Max 3 Versuche → Pause 30s → Exponential Backoff → Stopp. **Kein IP-Ban-Risiko!**
-- 🎨 **Modernes Dark-UI-Redesign:** Alle Dialoge (Setup, Quick Actions, Notifications) komplett neu
-- 🔔 **NotificationPopup:** Schwebende HA-Benachrichtigungen mit Aktions-Buttons, Auto-Dismiss
-- ⚡ **Quick Actions:** Karten-Design mit Toggle-Indikator und Animations
-- ⚙️ **Setup-Dialog:** Sections, Token-Anzeige/Verbergen, Klapp-Hilfe, Versuchszähler
+## [v4.0.0] - 2026-05-23
+- 🆕 **Neu:** Embedded HA Dashboard mit WebView (Windows: WebView2, Linux: WebKitGTK) mit external_auth Auto-Login
+- 🆕 **Neu:** AuthGuard – IP-Ban-Schutz mit Rate-Limiting und Retry-Backoff
+- 🎨 **Redesign:** Moderne Notification-Popups (Dark Theme, abgerundete Ecken)
+- 🎨 **Redesign:** Modernisierte Einstellungen
+- ⚠️ **Breaking:** LibreHardwareMonitorLib + WinRing0 komplett entfernt → treiberloser Sensor-Stack
+- 🔒 **Security:** Keine Windows Defender "Vulnerable Driver" Warnung mehr
+- 📊 **Sensoren:** WMI + PerformanceCounter + nvidia-smi + AMD ADLX (treiberlos)
+
 
 ## [v3.0.2] - 2026-05-12
 - 🔒 **Login-Retry-Limit:** Nach 3 fehlgeschlagenen Token-Logins wird die Verbindung gestoppt (verhindert HA IP-Ban)

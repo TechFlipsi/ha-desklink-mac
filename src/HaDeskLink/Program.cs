@@ -98,6 +98,6 @@ static class Program
             if (File.Exists(vfile)) return File.ReadAllText(vfile).Trim();
         }
         catch { }
-        return "3.0.3";
+        return "4.0.0";
     }
 }
