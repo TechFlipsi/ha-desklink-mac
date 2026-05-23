@@ -1,5 +1,13 @@
 # Changelog
 
+## [v4.1.0] - 2026-05-23
+- 🔔 **Notification Toast Overhaul:** Modernes dark navy blue Design mit accent color support, timestamp, button hover styling, und proper auto-close timer cleanup (pause-on-hover)
+- 🟢 **Connection Toast:** Grüner accent für Verbindungsbenachrichtigungen
+- 🔄 **Retry Button:** "Neu verbinden" mit Tooltip statt "Erneut verbinden"
+- 🛠️ **Fix:** `.Wait()` Deadlock in Program.cs und HaWebSocketClient.cs durch `Task.Run` ersetzt
+- 🧹 **Cleanup:** Ungenutzte Lokalisierungs-Keys aus allen 6 Sprachdateien entfernt
+- 📝 **Version:** Auf v4.1.0 gebumpt
+
 ## [v4.0.0] - 2026-05-23
 - 🆕 **Neu:** HA Dashboard öffnet sich im Standard-Browser (einmaliges Login, Session bleibt erhalten)
 - 🎨 **Redesign:** Moderne Notification-Popups (Dark Theme, abgerundete Ecken)

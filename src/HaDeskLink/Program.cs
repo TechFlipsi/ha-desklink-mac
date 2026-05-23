@@ -58,7 +58,7 @@ static class Program
 
             try
             {
-                api.RegisterAsync(url, token).Wait();
+                Task.Run(async () => await api.RegisterAsync(url, token)).GetAwaiter().GetResult();
                 Console.WriteLine("✓ Registriert!");
             }
             catch (Exception ex)
@@ -98,6 +98,6 @@ static class Program
             if (File.Exists(vfile)) return File.ReadAllText(vfile).Trim();
         }
         catch { }
-        return "4.0.1";
+        return "4.1.0";
     }
 }

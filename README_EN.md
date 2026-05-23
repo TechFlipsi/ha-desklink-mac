@@ -1,4 +1,4 @@
-# HA DeskLink macOS v4.0
+# HA DeskLink macOS v4.1
 
 [![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
 [![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)

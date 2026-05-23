@@ -102,6 +102,7 @@ public partial class MainWindow : Window
         var dashboardBtn = new Button
         {
             Content = "🌐 Dashboard öffnen",
+            [ToolTip.TipProperty] = "Home Assistant Dashboard im Browser öffnen",
             FontSize = 15,
             FontWeight = FontWeight.SemiBold,
             Background = new SolidColorBrush(Color.FromArgb(255, 66, 133, 244)),
@@ -119,6 +120,7 @@ public partial class MainWindow : Window
         var quickActionsBtn = new Button
         {
             Content = "⚡ Quick Actions",
+            [ToolTip.TipProperty] = "Entity-Umschalter für Home Assistant Geräte",
             FontSize = 14,
             Background = AccentBrush,
             Foreground = Brushes.White,
@@ -159,8 +161,8 @@ public partial class MainWindow : Window
             Margin = new Thickness(0, 16, 0, 8),
             Children =
             {
-                new Button { Content = "💬 Discord", FontSize = 12, Background = AccentBrush, Foreground = Brushes.White, CornerRadius = new CornerRadius(6), Padding = new Thickness(12, 6) },
-                new Button { Content = "📦 GitHub", FontSize = 12, Background = AccentBrush, Foreground = Brushes.White, CornerRadius = new CornerRadius(6), Padding = new Thickness(12, 6) },
+                new Button { Content = "💬 Discord", [ToolTip.TipProperty] = "HA DeskLink Discord Community beitreten", FontSize = 12, Background = AccentBrush, Foreground = Brushes.White, CornerRadius = new CornerRadius(6), Padding = new Thickness(12, 6) },
+                new Button { Content = "📦 GitHub", [ToolTip.TipProperty] = "HA DeskLink macOS auf GitHub anzeigen", FontSize = 12, Background = AccentBrush, Foreground = Brushes.White, CornerRadius = new CornerRadius(6), Padding = new Thickness(12, 6) },
             }
         });
 
@@ -187,7 +189,8 @@ public partial class MainWindow : Window
 
         _retryButton = new Button
         {
-            Content = "🔄 Erneut verbinden",
+            Content = "🔄 Neu verbinden",
+            [ToolTip.TipProperty] = "Verbindung zu Home Assistant erneut herstellen",
             FontSize = 13,
             Background = HighlightBrush,
             Foreground = Brushes.White,
@@ -250,7 +253,7 @@ public partial class MainWindow : Window
             if (System.IO.File.Exists(vfile)) return System.IO.File.ReadAllText(vfile).Trim();
         }
         catch { }
-        return "4.0.1";
+        return "4.1.0";
     }
 
     private static void OpenUrl(string url)

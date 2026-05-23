@@ -289,7 +289,9 @@ public class HaWebSocketClient : IDisposable
         try
         {
             if (_ws?.State == WebSocketState.Open)
-                _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Stopping", CancellationToken.None).Wait(2000);
+            {
+                Task.Run(async () => await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Stopping", CancellationToken.None)).GetAwaiter().GetResult();
+            }
         }
         catch { }
     }
