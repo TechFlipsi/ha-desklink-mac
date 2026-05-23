@@ -1,4 +1,4 @@
-# HA DeskLink macOS v4.1
+# HA DeskLink macOS v4.2
 
 [![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
 [![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)
@@ -21,8 +21,8 @@ Please report bugs at [Issues](https://github.com/TechFlipsi/ha-desklink-mac/iss
 
 ## Features
 - 🌡️ **CPU Temperature** – via ioreg SMC, powermetrics, or osx-cpu-temp
-- 📊 **All Sensors** – CPU, RAM, Battery, Disk, Uptime, Network, macOS-exclusive sensors
-- 🖥️ **PC Commands from HA** – Shutdown, Restart, Sleep, Lock, Volume, Brightness
+- 📊 **All Sensors** – CPU, RAM, GPU, Battery, Disk, Uptime, Network, Audio, Microphone, Webcam, Idle Time, Connectivity, macOS-exclusive sensors
+- 🖥️ **PC Commands from HA** – Shutdown, Restart, Sleep, Hibernate, Lock, Volume, Media Control, Brightness
 - 🖥️ **Graphical Interface** – Avalonia UI dashboard with status & setup
 - 📬 **Push Notifications** – WebSocket-based, like the mobile app
 - 🔔 **Actionable Notifications** – Notifications with action buttons
@@ -38,10 +38,17 @@ Please report bugs at [Issues](https://github.com/TechFlipsi/ha-desklink-mac/iss
 
 | Sensor | Description | macOS Exclusive |
 |---|---|:---:|
-| `cpu_temp` | CPU temperature in °C | |
-| `cpu_usage` | CPU usage in % | |
-| `memory` | RAM usage in % | |
+| `cpu_temperature` | CPU temperature in °C | |
+| `cpu_percent` | CPU usage in % | |
+| `cpu_clock` | CPU clock speed in MHz | |
+| `gpu_load` | GPU usage in % | |
+| `memory_percent` | RAM usage in % | |
 | `memory_available` | RAM available in GB | |
+| `audio_volume` | System volume in % | |
+| `audio_mute` | Mute status (on/off) | |
+| `mic_active` | Microphone in use (on/off) | |
+| `idle_time` | Seconds since last user input | |
+| `connectivity` | Internet connectivity (on/off) | |
 | `battery` | Battery level in % | |
 | `battery_charging` | Battery charging | |
 | `battery_cycle_count` | Battery cycle count | ✅ |
@@ -72,14 +79,13 @@ The CPU temperature is attempted in this order:
 | Sensor | Windows | Linux | macOS | Why? |
 |---|:---:|:---:|:---:|---|
 | GPU Temperature | ✅ | ✅ | ❌ | No public API, LibreHardwareMonitor not available |
-| GPU Load | ✅ | ✅ | ❌ | Only via `sudo powermetrics` |
-| CPU Clock | ✅ | ✅ | ❌ | `sysctl hw.cpufrequency` doesn't work on Apple Silicon |
+| GPU VRAM | ✅ | ✅ | ❌ | No public API for VRAM usage |
 | Fan Speed | ✅ | ✅ | ❌ | Only via `sudo powermetrics` |
 | Network Upload/Download | ✅ | ✅ | ❌ | No user-level API for live network speed |
 
 ## Commands
 
-`shutdown`, `restart`, `sleep`, `lock`, `mute`, `volume_up`, `volume_down`, `monitor_off`, `monitor_on`, `screenshot`, `screenshot_save`, `brightness_up`, `brightness_down`, `brightness:50`
+`shutdown`, `restart`, `sleep`, `lock_screen`, `hibernate`, `volume_mute`, `volume_up`, `volume_down`, `media_play_pause`, `media_next`, `media_previous`, `monitor_off`, `monitor_on`, `screenshot`, `screenshot_save`, `brightness_up`, `brightness_down`, `brightness:50`
 
 > ⚠️ **Brightness commands** generally only work on **MacBooks** with built-in displays. External monitors may not support software brightness control.
 

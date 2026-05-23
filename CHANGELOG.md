@@ -1,5 +1,35 @@
 # Changelog
 
+## [v4.2.0] - 2026-05-23
+
+### 📊 Neue Sensoren
+- **idle_time** – Sekunden seit letzter Benutzereingabe
+- **audio_volume** – System-Lautstärke 0-100%
+- **audio_mute** – Stummschaltung (on/off)
+- **mic_active** – Mikrofon in Benutzung (binary sensor)
+- **gpu_load** – GPU-Auslastung in %
+- **cpu_clock** – CPU-Taktrate in MHz
+- **connectivity** – Internet-Verbindungscheck (binary sensor)
+
+### 🔄 Sensor-Namens-Standardisierung
+- `cpu_temp` → `cpu_temperature`, `cpu_usage` → `cpu_percent`, `memory` → `memory_percent`
+
+### ⚡ Neue Befehle
+- **lock_screen**, **hibernate** – PC-Energiebefehle
+- **volume_up**, **volume_down**, **volume_mute** – Lautstärke-Steuerung
+- **media_play_pause**, **media_next**, **media_previous** – Mediensteuerung
+
+### 🌍 Lokalisierung
+- 22 neue Lokalisierungs-Keys in allen 6 Sprachen (de, en, es, fr, zh, ja)
+
+### 🐛 Bugfixes
+- ReadToEnd/WaitForExit Deadlock in ~15 Methoden behoben
+- Malformed Screenshot JSON korrigiert
+- Timer Async Exception Swallowing behoben
+- Console Null Ref behoben
+- CommandHandler Fire-and-Forget korrigiert
+- WebSocket Stop Deadlock behoben
+
 ## [v4.1.0] - 2026-05-23
 - 🔔 **Notification Toast Overhaul:** Modernes dark navy blue Design mit accent color support, timestamp, button hover styling, und proper auto-close timer cleanup (pause-on-hover)
 - 🟢 **Connection Toast:** Grüner accent für Verbindungsbenachrichtigungen

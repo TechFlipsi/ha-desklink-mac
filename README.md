@@ -1,4 +1,4 @@
-# HA DeskLink macOS v4.1
+# HA DeskLink macOS v4.2
 
 [![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
 [![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)
@@ -31,10 +31,14 @@ Wenn du macOS nutzt, teste bitte diese Version und melde Bugs – **die Communit
 
 ---
 
-## v4.0 New Features
+## v4.2 New Features
 
 - 🖥️ **Dashboard** – Öffnet HA-Dashboard im Standard-Browser (einmaliges Login, Session bleibt erhalten)
 - 🎨 **Modernes Dark Mode** – Komplett neu gestaltete Benutzeroberfläche
+- 📊 **Neue Sensoren** – GPU-Auslastung, CPU-Takt, Audio-Lautstärke, Mikrofon-Status, Idle-Zeit, Internet-Connectivity
+- ⚡ **Neue Befehle** – Mediensteuerung (Play/Pause, Next, Previous), volume_up/down/mute
+- 🌍 **22 neue Lokalisierungs-Keys** in allen 6 Sprachen
+- 🔄 **Sensor-Standardisierung** – `cpu_temp` → `cpu_temperature`, `cpu_usage` → `cpu_percent`, `memory` → `memory_percent`
 
 ### v3.0 Features
 
@@ -47,10 +51,17 @@ Wenn du macOS nutzt, teste bitte diese Version und melde Bugs – **die Communit
 
 | Sensor | ID | Einheit | Verfügbar | Hinweis |
 |---|---|---|---|---|
-| CPU-Temperatur | `cpu_temp` | °C | ⚠️ | Siehe unten |
-| CPU-Auslastung | `cpu_usage` | % | ✅ | |
-| RAM Auslastung | `memory` | % | ✅ | |
+| CPU-Temperatur | `cpu_temperature` | °C | ⚠️ | Siehe unten |
+| CPU-Auslastung | `cpu_percent` | % | ✅ | |
+| CPU-Takt | `cpu_clock` | MHz | ✅ | Neu in v4.2 |
+| GPU-Auslastung | `gpu_load` | % | ✅ | Neu in v4.2 |
+| RAM Auslastung | `memory_percent` | % | ✅ | |
 | RAM Verfügbar | `memory_available` | GB | ✅ | |
+| Audio-Lautstärke | `audio_volume` | % | ✅ | Neu in v4.2 |
+| Audio Stumm | `audio_mute` | – | ✅ | Binary Sensor, Neu in v4.2 |
+| Mikrofon aktiv | `mic_active` | – | ✅ | Binary Sensor, Neu in v4.2 |
+| Idle-Zeit | `idle_time` | s | ✅ | Neu in v4.2 |
+| Internet | `connectivity` | – | ✅ | Binary Sensor, Neu in v4.2 |
 | Akku | `battery` | % | ✅ | |
 | Akku lädt | `battery_charging` | – | ✅ | |
 | Akku-Ladezyklen | `battery_cycle_count` | – | ✅ | 🍎 macOS-exklusiv |
@@ -84,8 +95,7 @@ Wenn keine Methode funktioniert, bleibt der Sensor leer.
 | Sensor | Windows | Linux | macOS | Warum nicht auf macOS? |
 |---|---|---|---|---|
 | GPU-Temperatur | ✅ LibreHardwareMonitor | ✅ | ❌ | Keine öffentliche API, LibreHardwareMonitor gibt es nicht für macOS |
-| GPU-Auslastung | ✅ LibreHardwareMonitor | ✅ | ❌ | Nur via `sudo powermetrics` – nicht ohne Admin-Rechte |
-| CPU-Takt | ✅ LibreHardwareMonitor | ✅ | ❌ | `sysctl hw.cpufrequency` funktioniert **nicht** auf Apple Silicon (nur Intel-Macs) |
+| GPU-VRAM | ✅ | ✅ | ❌ | Keine öffentliche API für VRAM-Auslastung |
 | Lüfter-Drehzahl | ✅ LibreHardwareMonitor | ✅ | ❌ | Nur via `sudo powermetrics` auslesbar |
 | Lüfter-Steuerung | ✅ | ❌ | ❌ | System-geregelt, kein User-Zugang |
 | Netzwerk-Upload/Download | ✅ | ✅ | ❌ | `netstat -ib` liefert Byte-Counts aber keine Live-Rate ohne Polling-Logik |
@@ -94,7 +104,7 @@ Wenn keine Methode funktioniert, bleibt der Sensor leer.
 
 ## Befehle
 
-`shutdown`, `restart`, `sleep`, `lock`, `mute`, `volume_up`, `volume_down`, `monitor_off`, `monitor_on`, `screenshot`, `screenshot_save`, `brightness_up`, `brightness_down`, `brightness:50`
+`shutdown`, `restart`, `sleep`, `lock_screen`, `hibernate`, `volume_mute`, `volume_up`, `volume_down`, `media_play_pause`, `media_next`, `media_previous`, `monitor_off`, `monitor_on`, `screenshot`, `screenshot_save`, `brightness_up`, `brightness_down`, `brightness:50`
 
 ## Installation
 
