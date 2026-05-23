@@ -28,8 +28,7 @@ Please report bugs at [Issues](https://github.com/TechFlipsi/ha-desklink-mac/iss
 - 🔔 **Actionable Notifications** – Notifications with action buttons
 - ⚡ **Quick Actions** – Dashboard button for HA entity toggles
 - 📸 **Screenshot** – Screenshot save + upload as HA event
-- 🖥️ **Dashboard** – Opens HA dashboard in default browser (with auto-login)
-- 🛡️ **AuthGuard** – IP-ban protection: rate limiting, exponential backoff, automatic lock pause
+- 🖥️ **Dashboard** – Opens HA dashboard in default browser (login once, session persists)
 - 📷 **Webcam Sensor** – Shows if webcam is active (on/off)
 - 🔌 **mobile_app Protocol** – identical to the Windows app
 - 🔄 **Auto-Update** – checks for updates on startup

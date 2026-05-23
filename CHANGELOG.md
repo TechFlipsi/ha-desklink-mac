@@ -1,8 +1,7 @@
 # Changelog
 
 ## [v4.0.0] - 2026-05-23
-- 🆕 **Neu:** HA Dashboard öffnet sich im Standard-Browser mit external_auth Auto-Login
-- 🆕 **Neu:** AuthGuard – IP-Ban-Schutz mit Rate-Limiting und Retry-Backoff
+- 🆕 **Neu:** HA Dashboard öffnet sich im Standard-Browser (einmaliges Login, Session bleibt erhalten)
 - 🎨 **Redesign:** Moderne Notification-Popups (Dark Theme, abgerundete Ecken)
 - 🎨 **Redesign:** Modernisierte Einstellungen
 - 📊 **Sensoren:** macOS-iBoard + `ioreg` SMC + `powermetrics` (treiberlos)

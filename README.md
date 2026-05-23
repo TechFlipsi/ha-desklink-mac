@@ -33,8 +33,7 @@ Wenn du macOS nutzt, teste bitte diese Version und melde Bugs – **die Communit
 
 ## v4.0 New Features
 
-- 🖥️ **Dashboard im Browser** – HA-Dashboard öffnet sich automatisch im Standard-Browser (mit Auto-Login)
-- 🛡️ **AuthGuard** – IP-Ban-Schutz: Rate-Limiting, Exponential Backoff, automatische Sperr-Pause
+- 🖥️ **Dashboard** – Öffnet HA-Dashboard im Standard-Browser (einmaliges Login, Session bleibt erhalten)
 - 🎨 **Modernes Dark Mode** – Komplett neu gestaltete Benutzeroberfläche
 
 ### v3.0 Features
