@@ -49,7 +49,7 @@ static class Program
             Console.Write("Long-Lived Access Token: ");
             var token = Console.ReadLine()?.Trim() ?? "";
             Console.Write("SSL überprüfen? (j/n) [n]: ");
-            var ssl = Console.ReadLine()?.Trim().ToLowerInvariant();
+            var ssl = Console.ReadLine()?.Trim()?.ToLowerInvariant();
             var verifySsl = ssl == "j" || ssl == "y";
 
             config.HaUrl = url;

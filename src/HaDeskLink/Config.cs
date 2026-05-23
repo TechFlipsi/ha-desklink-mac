@@ -66,7 +66,7 @@ public class Config
             proc.StandardInput.Close();
             // Read stderr BEFORE WaitForExit to prevent deadlock
             var stderr = proc.StandardError.ReadToEnd();
-            proc.WaitForExit(5000);
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } }
             if (proc.ExitCode != 0 && !string.IsNullOrWhiteSpace(stderr))
                 Console.WriteLine($"[Keychain] Store failed: {stderr.Trim()}");
             return proc.ExitCode == 0;
@@ -92,7 +92,7 @@ public class Config
             };
             var proc = System.Diagnostics.Process.Start(psi);
             var output = proc?.StandardOutput.ReadToEnd().Trim();
-            proc?.WaitForExit(5000);
+            if (proc != null && !proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } }
             return proc?.ExitCode == 0 ? output : null;
         }
         catch { return null; }

@@ -253,7 +253,7 @@ public class HaWebSocketClient : IDisposable
                     if (actions != null && actions.Count > 0 && !string.IsNullOrEmpty(commandOnAction))
                     {
                         Console.WriteLine($"[Action] Auto-executing: {commandOnAction}");
-                        try { _ = CommandHandler.ExecuteAsync(commandOnAction); }
+                        try { _ = CommandHandler.ExecuteAsync(commandOnAction).ContinueWith(t => { if (t.IsFaulted) Console.WriteLine($"[CommandHandler] Error: {t.Exception?.InnerException?.Message}"); }, TaskScheduler.Default); }
                         catch { }
                     }
 
@@ -290,7 +290,7 @@ public class HaWebSocketClient : IDisposable
         {
             if (_ws?.State == WebSocketState.Open)
             {
-                Task.Run(async () => await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Stopping", CancellationToken.None)).GetAwaiter().GetResult();
+                _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Stopping", CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
             }
         }
         catch { }

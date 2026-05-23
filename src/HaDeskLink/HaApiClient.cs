@@ -220,12 +220,15 @@ public class HaApiClient
         var payload = new Dictionary<string, object>
         {
             ["type"] = "fire_event",
-            ["event_type"] = "ha_desklink_screenshot",
-            ["event_data"] = new Dictionary<string, object>
+            ["data"] = new Dictionary<string, object>
             {
-                ["screenshot"] = base64,
-                ["device_name"] = Environment.MachineName,
-                ["platform"] = "mac"
+                ["event_type"] = "ha_desklink_screenshot",
+                ["event_data"] = new Dictionary<string, object>
+                {
+                    ["screenshot"] = base64,
+                    ["device_name"] = Environment.MachineName,
+                    ["platform"] = "mac"
+                }
             }
         };
         var json = JsonSerializer.Serialize(payload);
@@ -259,7 +262,7 @@ public class HaApiClient
             };
             var proc = System.Diagnostics.Process.Start(psi);
             var output = proc?.StandardOutput.ReadToEnd().Trim();
-            proc?.WaitForExit(3000);
+            if (proc != null && !proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } }
             return string.IsNullOrEmpty(output) ? "Mac" : output;
         }
         catch { return "Mac"; }

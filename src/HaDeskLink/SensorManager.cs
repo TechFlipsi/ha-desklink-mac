@@ -152,7 +152,7 @@ public static class SensorManager
                     var proc = Process.Start(psi);
                     if (proc == null) continue;
                     var output = proc.StandardOutput.ReadToEnd();
-                    proc.WaitForExit(3000);
+                    if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
                     // Find the key and its hex value: "TA0p" = <000e2c00>
                     var keyPattern = "\"" + key + "\"";
@@ -205,7 +205,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit(5000);
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } };
 
             foreach (var line in output.Split('\n'))
             {
@@ -236,7 +236,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
             output = output.Replace("°C", "").Trim();
             if (float.TryParse(output, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var temp))
                 return temp;
@@ -261,7 +261,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(5000);
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } };
 
             // Output: "CPU usage: 12.5% user, 8.3% sys, 79.2% idle"
             if (output.Contains("idle"))
@@ -299,7 +299,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return (null, null);
             var output = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit(5000);
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } };
 
             ulong freePages = 0, inactivePages = 0;
             ulong totalMemory = 0;
@@ -362,7 +362,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return (null, null);
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             var match = System.Text.RegularExpressions.Regex.Match(output, @"(\d+)%");
             if (match.Success && int.TryParse(match.Groups[1].Value, out var pct))
@@ -390,7 +390,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(5000);
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } };
 
             // Output: "Cycle Count: 42"
             var match = System.Text.RegularExpressions.Regex.Match(output, @"Cycle Count:\s*(\d+)");
@@ -416,7 +416,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return "Unbekannt";
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             // If adapter info is present, it's connected
             if (!string.IsNullOrEmpty(output) && output.Contains("Watt"))
@@ -438,7 +438,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return "Unbekannt";
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             if (output.Contains("AC Power") || output.Contains("charging"))
                 return "Angeschlossen";
@@ -469,7 +469,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             foreach (var line in output.Split('\n'))
             {
@@ -504,7 +504,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             // Output: "sec = 1703275200, usec = 0" (Unix timestamp of boot)
             var match = System.Text.RegularExpressions.Regex.Match(output, @"sec = (\d+)");
@@ -538,7 +538,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(5000);
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } };
 
             // Output: "Chipset Model: Apple M1"
             foreach (var line in output.Split('\n'))
@@ -570,7 +570,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(5000);
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } };
 
             // Output: "Resolution: 2560 x 1600 Retina"
             foreach (var line in output.Split('\n'))
@@ -606,7 +606,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             if (int.TryParse(output, out var count))
                 return Math.Max(0, count - 1); // subtract header line
@@ -635,7 +635,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             if (!string.IsNullOrEmpty(output) && output.Contains("."))
                 return output;
@@ -656,7 +656,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             if (!string.IsNullOrEmpty(output) && output.Contains("."))
                 return output;
@@ -680,7 +680,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return null;
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             // Output: "Current Wi-Fi Network: MyNetwork" or "SSID: MyNetwork"
             if (output.Contains(":"))
@@ -714,7 +714,7 @@ public static class SensorManager
             if (proc != null)
             {
                 var output = proc.StandardOutput.ReadToEnd().Trim();
-                proc.WaitForExit(3000);
+                if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
                 var match = System.Text.RegularExpressions.Regex.Match(output, @"brightness.*?(\d+)");
                 if (match.Success && int.TryParse(match.Groups[1].Value, out var val))
@@ -738,7 +738,7 @@ public static class SensorManager
             if (proc != null)
             {
                 var output = proc.StandardOutput.ReadToEnd().Trim();
-                proc.WaitForExit(3000);
+                if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
                 if (float.TryParse(output, System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out var val))
                 {
@@ -769,7 +769,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return "";
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             foreach (var appName in output.Split(',').Select(s => s.Trim().Trim('"')))
             {
@@ -787,7 +787,7 @@ public static class SensorManager
                     var fsProc = Process.Start(fsPsi);
                     if (fsProc == null) continue;
                     var bounds = fsProc.StandardOutput.ReadToEnd().Trim();
-                    fsProc.WaitForExit(2000);
+                    if (!fsProc.WaitForExit(2000)) { try { fsProc.Kill(); } catch { } }
 
                     if (!string.IsNullOrEmpty(bounds) && bounds.Contains(","))
                     {
@@ -822,7 +822,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return "1";
             var output = proc.StandardOutput.ReadToEnd().Trim();
-            proc.WaitForExit(5000);
+            if (!proc.WaitForExit(5000)) { try { proc.Kill(); } catch { } };
 
             if (int.TryParse(output, out var count) && count > 0)
                 return count == 1 ? "1" : $"1+{count - 1}";
@@ -851,7 +851,7 @@ public static class SensorManager
             var proc = Process.Start(psi);
             if (proc == null) return false;
             var output = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit(3000);
+            if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
 
             if (string.IsNullOrWhiteSpace(output)) return false;
             // Check if camera device shows active state
@@ -873,7 +873,7 @@ public static class SensorManager
             var proc2 = Process.Start(psi2);
             if (proc2 == null) return false;
             var output2 = proc2.StandardOutput.ReadToEnd();
-            proc2.WaitForExit(3000);
+            if (!proc2.WaitForExit(3000)) { try { proc2.Kill(); } catch { } }
 
             if (output2.Contains("Online") || output2.Contains("Active"))
                 return true;
@@ -903,7 +903,7 @@ public static class SensorManager
             if (proc != null)
             {
                 var output = proc.StandardOutput.ReadToEnd();
-                proc.WaitForExit(3000);
+                if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
                 var match = System.Text.RegularExpressions.Regex.Match(output, @"brightness\s+([\d.]+)");
                 if (match.Success && float.TryParse(match.Groups[1].Value,
                     System.Globalization.NumberStyles.Float,
@@ -929,7 +929,7 @@ public static class SensorManager
             if (proc != null)
             {
                 var output = proc.StandardOutput.ReadToEnd().Trim();
-                proc.WaitForExit(3000);
+                if (!proc.WaitForExit(3000)) { try { proc.Kill(); } catch { } };
                 if (float.TryParse(output, System.Globalization.NumberStyles.Float,
                     System.Globalization.CultureInfo.InvariantCulture, out var val))
                 {

@@ -49,7 +49,11 @@ public class DeskLinkApp : Application
             StartWebSocket(config, api);
 
             // Start sensor timer
-            _sensorTimer = new System.Threading.Timer(async _ => await UpdateSensors(api), null,
+            _sensorTimer = new System.Threading.Timer(async _ =>
+            {
+                try { await UpdateSensors(api); }
+                catch (Exception ex) { System.Console.WriteLine($"[SensorTimer] Error: {ex.Message}"); }
+            }, null,
                 System.TimeSpan.Zero, System.TimeSpan.FromSeconds(config.SensorInterval));
         }
         base.OnFrameworkInitializationCompleted();
@@ -74,7 +78,7 @@ public class DeskLinkApp : Application
                 config.HaToken,
                 webhookId,
                 null,
-                cmd => { try { _ = CommandHandler.ExecuteAsync(cmd); } catch { } },
+                cmd => { try { _ = CommandHandler.ExecuteAsync(cmd).ContinueWith(t => { if (t.IsFaulted) System.Console.WriteLine($"[CommandHandler] Error: {t.Exception?.InnerException?.Message}"); }, TaskScheduler.Default); } catch { } },
                 verifySsl: config.VerifySsl
             );
 
