@@ -1,4 +1,4 @@
-# HA DeskLink macOS v3.0
+# HA DeskLink macOS v4.0
 
 [![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
 [![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)
@@ -31,7 +31,13 @@ Wenn du macOS nutzt, teste bitte diese Version und melde Bugs – **die Communit
 
 ---
 
-## v3.0 New Features
+## v4.0 New Features
+
+- 🖥️ **Dashboard im Browser** – HA-Dashboard öffnet sich automatisch im Standard-Browser (mit Auto-Login)
+- 🛡️ **AuthGuard** – IP-Ban-Schutz: Rate-Limiting, Exponential Backoff, automatische Sperr-Pause
+- 🎨 **Modernes Dark Mode** – Komplett neu gestaltete Benutzeroberfläche
+
+### v3.0 Features
 
 - 🔔 **Actionable Notifications** – Benachrichtigungen mit Aktions-Buttons via osascript
 - ⚡ **Quick Actions** – Dashboard-Button mit HA-Entity-Toggle-Popup

@@ -1,4 +1,4 @@
-# HA DeskLink macOS v3.0
+# HA DeskLink macOS v4.0
 
 [![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
 [![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)
@@ -28,6 +28,8 @@ Please report bugs at [Issues](https://github.com/TechFlipsi/ha-desklink-mac/iss
 - 🔔 **Actionable Notifications** – Notifications with action buttons
 - ⚡ **Quick Actions** – Dashboard button for HA entity toggles
 - 📸 **Screenshot** – Screenshot save + upload as HA event
+- 🖥️ **Dashboard** – Opens HA dashboard in default browser (with auto-login)
+- 🛡️ **AuthGuard** – IP-ban protection: rate limiting, exponential backoff, automatic lock pause
 - 📷 **Webcam Sensor** – Shows if webcam is active (on/off)
 - 🔌 **mobile_app Protocol** – identical to the Windows app
 - 🔄 **Auto-Update** – checks for updates on startup
