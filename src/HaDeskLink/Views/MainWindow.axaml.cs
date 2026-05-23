@@ -253,7 +253,7 @@ public partial class MainWindow : Window
             if (System.IO.File.Exists(vfile)) return System.IO.File.ReadAllText(vfile).Trim();
         }
         catch { }
-        return "4.1.0";
+        return "4.3.0";
     }
 
     private static void OpenUrl(string url)

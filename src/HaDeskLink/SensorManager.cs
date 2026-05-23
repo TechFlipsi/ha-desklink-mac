@@ -168,6 +168,12 @@ public static class SensorManager
         var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
         sensors.Add(new SensorData("ha_desklink_version", Localization.Get("ha_desklink_version", "HA DeskLink Version"), version, "", "", "mdi:information-outline"));
 
+        // PC status (binary_sensor: "on" while app is running)
+        var pcStatus = new SensorData("pc_status", "PC Status", "on", "", "connectivity", "mdi:desktop-classic");
+        pcStatus.SensorKind = SensorType.BinarySensor;
+        pcStatus.EntityCategory = null;
+        sensors.Add(pcStatus);
+
         return sensors;
     }
 
