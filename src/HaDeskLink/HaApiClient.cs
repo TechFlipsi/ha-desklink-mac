@@ -378,6 +378,6 @@ public class HaApiClient
                 return assemblyVersion.ToString();
         }
         catch { }
-        return "4.4.1";
+        return "4.4.2";
     }
 }

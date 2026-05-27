@@ -259,35 +259,38 @@ public partial class MainWindow : Window
         mqttAutoBtn.Click += async (s, e) =>
         {
             mqttAutoBtn.IsEnabled = false;
-            mqttStatusLabel.Text = "⏳ Verbinde...";
+            mqttStatusLabel.Text = "⏳ Konfiguriere...";
             try
             {
-                var fallbackHost = _mqttFallbackBox?.Text?.Trim();
-                fallbackHost = string.IsNullOrEmpty(fallbackHost) ? null : fallbackHost;
-                var result = await MqttSetupHelper.AutoConfigureAsync(config.HaUrl, config.HaToken, fallbackHost);
-                if (result.Success)
+                // Try the HA URL's host as the MQTT broker (common setup)
+                var haHost = new Uri(config.HaUrl).Host;
+                var port = 1883;
+                mqttBrokerBox.Text = haHost;
+                mqttPortBox.Text = port.ToString();
+
+                // Test anonymous connection
+                var ok = await MqttSetupHelper.TestConnectionAsync(haHost, port, null, null, false);
+                if (ok)
                 {
                     mqttEnableCheck.IsChecked = true;
-                    mqttBrokerBox.Text = result.BrokerHost ?? "";
-                    mqttPortBox.Text = result.BrokerPort.ToString();
-                    mqttUserBox.Text = result.Username ?? "";
-                    mqttPassBox.Text = result.Password ?? "";
-                    mqttSslCheck.IsChecked = result.UseSsl;
+                    mqttUserBox.Text = "";
+                    mqttPassBox.Text = "";
+                    mqttSslCheck.IsChecked = false;
                     config.MqttEnabled = true;
-                    config.MqttBroker = result.BrokerHost ?? "";
-                    config.MqttPort = result.BrokerPort;
-                    config.MqttUsername = result.Username ?? "";
-                    config.MqttPassword = result.Password ?? "";
-                    config.MqttUseSsl = result.UseSsl;
+                    config.MqttBroker = haHost;
+                    config.MqttPort = port;
+                    config.MqttUsername = "";
+                    config.MqttPassword = "";
+                    config.MqttUseSsl = false;
                     config.MqttBrokerFallback = _mqttFallbackBox?.Text?.Trim() ?? "";
                     config.MqttAutoConfigured = true;
                     config.Save();
-                    mqttStatusLabel.Text = $"✓ MQTT konfiguriert ({result.BrokerHost}:{result.BrokerPort})";
+                    mqttStatusLabel.Text = $"✓ MQTT verbunden ({haHost}:{port})";
                 }
-                else if (result.MosquittoNotInstalled)
-                    mqttStatusLabel.Text = "⚠️ Mosquitto nicht gefunden. Bitte in HA installieren.";
                 else
-                    mqttStatusLabel.Text = $"⚠️ Fehler: {result.ErrorMessage ?? "Unbekannt"}";
+                {
+                    mqttStatusLabel.Text = $"⚠️ Keine Verbindung zu {haHost}:{port}. Bitte manuell eingeben.";
+                }
             }
             catch (Exception ex) { mqttStatusLabel.Text = $"✗ Fehler: {ex.Message}"; }
             finally { mqttAutoBtn.IsEnabled = true; }
@@ -458,7 +461,7 @@ public partial class MainWindow : Window
             if (System.IO.File.Exists(vfile)) return System.IO.File.ReadAllText(vfile).Trim();
         }
         catch { }
-        return "4.4.1";
+        return "4.4.2";
     }
 
     private static void OpenUrl(string url)

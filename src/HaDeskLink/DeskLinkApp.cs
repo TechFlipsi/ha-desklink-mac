@@ -118,7 +118,7 @@ public class DeskLinkApp : Application
             }
 
             var configDir = Config.GetConfigDir();
-            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "4.4.1";
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "4.4.2";
 
             _mqttClient = new MqttClient(
                 config.MqttBroker,
@@ -128,17 +128,25 @@ public class DeskLinkApp : Application
                 config.MqttUseSsl,
                 configDir,
                 version,
-                cmd => { try { _ = CommandHandler.ExecuteAsync(cmd); } catch { } }
+                cmd => { try { _ = CommandHandler.ExecuteAsync(cmd); } catch { } },
+                onConnectedCallback: () =>
+                {
+                    try
+                    {
+                        var sensors = SensorManager.GetAllSensors();
+                        _ = Task.Run(async () =>
+                        {
+                            try { await _mqttClient!.PublishDiscoveryAsync(sensors); }
+                            catch { }
+                            try { await _mqttClient!.PublishSensorStatesAsync(sensors); }
+                            catch { }
+                        });
+                    }
+                    catch { }
+                }
             );
 
             await _mqttClient.ConnectAsync();
-
-            // Publish discovery for all sensors + media player
-            var sensors = SensorManager.GetAllSensors();
-            await _mqttClient.PublishDiscoveryAsync(sensors);
-
-            // Publish initial states
-            await _mqttClient.PublishSensorStatesAsync(sensors);
 
             System.Console.WriteLine("[MQTT] Connected and discovery published");
         }

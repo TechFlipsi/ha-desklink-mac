@@ -112,55 +112,42 @@ static class Program
             return;
         }
 
-        Console.WriteLine("\nVersuche MQTT-Broker automatisch zu konfigurieren...");
+        // Try the HA URL's host as the MQTT broker (common setup)
+        string broker;
+        try { broker = new Uri(config.HaUrl).Host; } catch { broker = "homeassistant.local"; }
+        int port = 1883;
 
+        Console.WriteLine($"\nTeste MQTT-Verbindung zu {broker}:{port}...");
         try
         {
-            var fallbackHost = string.IsNullOrEmpty(config.MqttBrokerFallback) ? null : config.MqttBrokerFallback;
-            var result = Task.Run(() => MqttSetupHelper.AutoConfigureAsync(config.HaUrl, config.HaToken, fallbackHost)).GetAwaiter().GetResult();
+            var ok = Task.Run(() =>
+                MqttSetupHelper.TestConnectionAsync(broker, port, null, null, false)).GetAwaiter().GetResult();
 
-            if (result.Success)
+            if (ok)
             {
                 config.MqttEnabled = true;
-                config.MqttBroker = result.BrokerHost ?? "";
-                config.MqttPort = result.BrokerPort;
-                config.MqttUsername = result.Username ?? "";
-                config.MqttPassword = result.Password ?? "";
-                config.MqttUseSsl = result.UseSsl;
+                config.MqttBroker = broker;
+                config.MqttPort = port;
+                config.MqttUsername = "";
+                config.MqttPassword = "";
+                config.MqttUseSsl = false;
                 config.MqttAutoConfigured = true;
                 config.Save();
 
                 Console.WriteLine($"✓ MQTT erfolgreich konfiguriert!");
-                Console.WriteLine($"  Broker: {result.BrokerHost}:{result.BrokerPort}");
-            }
-            else if (result.MosquittoNotInstalled)
-            {
-                Console.WriteLine("⚠️ Mosquitto MQTT-Broker nicht gefunden.");
-                Console.WriteLine("   Installiere den Mosquitto Broker Add-on in Home Assistant:");
-                Console.WriteLine("   Einstellungen → Add-ons → Mosquitto Broker installieren & starten.");
-                Console.WriteLine();
-                Console.Write("Erneut prüfen? (j/n) [n]: ");
-                var retry = Console.ReadLine()?.Trim().ToLowerInvariant();
-                if (retry == "j" || retry == "y" || retry == "ja" || retry == "yes")
-                {
-                    RunMqttSetup(config);
-                    return;
-                }
-                Console.WriteLine("✓ Ohne MQTT fortfahren.");
+                Console.WriteLine($"  Broker: {broker}:{port}");
             }
             else
             {
-                Console.WriteLine($"⚠️ Fehler: {result.ErrorMessage ?? "Unbekannt"}");
+                Console.WriteLine($"⚠️ Keine Verbindung zu {broker}:{port}");
+                Console.WriteLine("   Bitte MQTT manuell in den Einstellungen konfigurieren.");
                 RunManualMqtt(config);
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"✗ Fehler: {ex.Message}");
-            Console.Write("\nManuelle Konfiguration? (j/n) [j]: ");
-            var manual = Console.ReadLine()?.Trim().ToLowerInvariant();
-            if (manual != "n" && manual != "no")
-                RunManualMqtt(config);
+            RunManualMqtt(config);
         }
     }
 
@@ -264,6 +251,6 @@ static class Program
                 return assemblyVersion.ToString();
         }
         catch { }
-        return "4.4.1";
+        return "4.4.2";
     }
 }
