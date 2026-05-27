@@ -458,7 +458,7 @@ public partial class MainWindow : Window
             if (System.IO.File.Exists(vfile)) return System.IO.File.ReadAllText(vfile).Trim();
         }
         catch { }
-        return "4.4.0";
+        return "4.4.1";
     }
 
     private static void OpenUrl(string url)

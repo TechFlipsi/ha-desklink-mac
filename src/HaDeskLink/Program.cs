@@ -264,6 +264,6 @@ static class Program
                 return assemblyVersion.ToString();
         }
         catch { }
-        return "4.4.0";
+        return "4.4.1";
     }
 }
