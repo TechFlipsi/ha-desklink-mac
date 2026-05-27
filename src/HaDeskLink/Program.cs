@@ -12,6 +12,7 @@
 #nullable enable
 using System;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using Avalonia;
 
@@ -248,7 +249,19 @@ static class Program
         try
         {
             var vfile = Path.Combine(AppContext.BaseDirectory, "VERSION");
-            if (File.Exists(vfile)) return File.ReadAllText(vfile).Trim();
+            if (File.Exists(vfile))
+            {
+                var content = File.ReadAllText(vfile).Trim();
+                if (!string.IsNullOrEmpty(content) && content.Length >= 5)
+                    return content;
+            }
+        }
+        catch { }
+        try
+        {
+            var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            if (assemblyVersion != null)
+                return assemblyVersion.ToString();
         }
         catch { }
         return "4.4.0";

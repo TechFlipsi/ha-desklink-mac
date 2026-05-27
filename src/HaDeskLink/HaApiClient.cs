@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -169,18 +170,49 @@ public class HaApiClient
         await _http.PostAsync(WebhookUrl, new StringContent(json, Encoding.UTF8, "application/json"));
     }
 
+    // Update loop protection: cooldown + duplicate check
+    private static string? _lastOfferedVersion = null;
+    private static DateTime _lastCheckTime = DateTime.MinValue;
+    private static readonly TimeSpan _checkCooldown = TimeSpan.FromHours(1);
+
     public async Task<string?> CheckForUpdateAsync(bool includePrerelease = false)
     {
         try
         {
+            // Update loop protection: cooldown between checks
+            if (DateTime.Now - _lastCheckTime < _checkCooldown && _lastOfferedVersion != null)
+                return null;
+
+            // Update loop protection: check if an update is already pending
+            try
+            {
+                var pendingFile = Path.Combine(_configDir, ".update_pending");
+                if (File.Exists(pendingFile))
+                {
+                    var pendingVer = File.ReadAllText(pendingFile).Trim();
+                    if (!string.IsNullOrEmpty(pendingVer))
+                    {
+                        var pendingVersion = ParseVersion(pendingVer);
+                        var installedVer = ParseVersion(GetVersion());
+                        if (pendingVersion.CompareTo(installedVer) >= 0)
+                            return null;
+                    }
+                }
+            }
+            catch { }
+
             using var ghClient = new HttpClient();
             ghClient.DefaultRequestHeaders.Add("User-Agent", "HA-DeskLink");
             var resp = await ghClient.GetAsync("https://api.github.com/repos/TechFlipsi/ha-desklink-mac/releases");
             if (!resp.IsSuccessStatusCode) return null;
             var data = JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
             var currentVersion = GetVersion();
+
             string? bestUrl = null;
+            string? bestTag = null;
+            Version? bestVersion = null;
             var currentVer = ParseVersion(currentVersion);
+
             foreach (var release in data.RootElement.EnumerateArray())
             {
                 if (!includePrerelease && release.TryGetProperty("prerelease", out var pre) && pre.GetBoolean())
@@ -189,13 +221,30 @@ public class HaApiClient
                 if (tagName.StartsWith("v")) tagName = tagName[1..];
                 var releaseVer = ParseVersion(tagName);
                 if (releaseVer == null || releaseVer.CompareTo(currentVer) <= 0) continue;
-                foreach (var asset in release.GetProperty("assets").EnumerateArray())
+
+                if (bestVersion == null || releaseVer.CompareTo(bestVersion) > 0)
                 {
-                    var name = asset.GetProperty("name").GetString() ?? "";
-                    if (name.EndsWith(".dmg") || name.EndsWith(".zip"))
-                        bestUrl = asset.GetProperty("browser_download_url").GetString();
+                    bestVersion = releaseVer;
+                    bestTag = tagName;
+                    foreach (var asset in release.GetProperty("assets").EnumerateArray())
+                    {
+                        var name = asset.GetProperty("name").GetString() ?? "";
+                        if (name.EndsWith(".dmg") || name.EndsWith(".zip"))
+                            bestUrl = asset.GetProperty("browser_download_url").GetString();
+                    }
                 }
             }
+
+            // Update loop protection: skip if we already offered this exact version
+            if (bestTag != null && bestTag == _lastOfferedVersion)
+                return null;
+
+            if (bestTag != null)
+            {
+                _lastOfferedVersion = bestTag;
+                _lastCheckTime = DateTime.Now;
+            }
+
             return bestUrl;
         }
         catch { }
@@ -314,7 +363,19 @@ public class HaApiClient
         try
         {
             var vfile = Path.Combine(AppContext.BaseDirectory, "VERSION");
-            if (File.Exists(vfile)) return File.ReadAllText(vfile).Trim();
+            if (File.Exists(vfile))
+            {
+                var content = File.ReadAllText(vfile).Trim();
+                if (!string.IsNullOrEmpty(content) && content.Length >= 5)
+                    return content;
+            }
+        }
+        catch { }
+        try
+        {
+            var assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            if (assemblyVersion != null)
+                return assemblyVersion.ToString();
         }
         catch { }
         return "4.4.0";
