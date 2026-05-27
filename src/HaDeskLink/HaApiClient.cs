@@ -68,7 +68,7 @@ public class HaApiClient
             ["device_id"] = deviceId,
             ["os_name"] = "macOS",
             ["os_version"] = Environment.OSVersion.VersionString,
-            ["manufacturer"] = "Apple",
+            ["manufacturer"] = "HA DeskLink",
             ["model"] = GetMacModel(),
             ["supports_encryption"] = false,
             ["app_data"] = new Dictionary<string, object>
@@ -102,7 +102,7 @@ public class HaApiClient
             {
                 ["app_version"] = GetVersion(),
                 ["device_name"] = Environment.MachineName,
-                ["manufacturer"] = "Apple",
+                ["manufacturer"] = "HA DeskLink",
                 ["model"] = GetMacModel(),
                 ["os_version"] = Environment.OSVersion.VersionString,
                 ["app_data"] = new Dictionary<string, object>
@@ -317,6 +317,6 @@ public class HaApiClient
             if (File.Exists(vfile)) return File.ReadAllText(vfile).Trim();
         }
         catch { }
-        return "4.3.0";
+        return "4.4.0";
     }
 }

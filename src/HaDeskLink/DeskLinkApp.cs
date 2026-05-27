@@ -118,7 +118,7 @@ public class DeskLinkApp : Application
             }
 
             var configDir = Config.GetConfigDir();
-            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "4.3.0";
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "4.4.0";
 
             _mqttClient = new MqttClient(
                 config.MqttBroker,
