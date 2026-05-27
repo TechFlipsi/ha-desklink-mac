@@ -115,7 +115,8 @@ static class Program
 
         try
         {
-            var result = Task.Run(() => MqttSetupHelper.AutoConfigureAsync(config.HaUrl, config.HaToken)).GetAwaiter().GetResult();
+            var fallbackHost = string.IsNullOrEmpty(config.MqttBrokerFallback) ? null : config.MqttBrokerFallback;
+            var result = Task.Run(() => MqttSetupHelper.AutoConfigureAsync(config.HaUrl, config.HaToken, fallbackHost)).GetAwaiter().GetResult();
 
             if (result.Success)
             {

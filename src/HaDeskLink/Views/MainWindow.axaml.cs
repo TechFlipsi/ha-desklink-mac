@@ -30,6 +30,9 @@ public partial class MainWindow : Window
     private TextBlock? _statusText;
     private TextBlock? _connectionLabel;
     private Button? _retryButton;
+    private TextBox? _mqttFallbackBox;
+    private Button? _btnMqttTest;
+    private TextBlock? _mqttStatusLabel;
 
     // ── Color Palette ──────────────────────────────────────────
     private static readonly IBrush BgBrush = new SolidColorBrush(Color.FromArgb(255, 26, 26, 46));
@@ -148,6 +151,208 @@ public partial class MainWindow : Window
                     new TextBlock { Text = "🖥️ Befehle", FontWeight = FontWeight.SemiBold, FontSize = 14, Foreground = Brushes.White },
                     new TextBlock { Text = "shutdown • restart • sleep • lock • mute", FontSize = 12, Foreground = GrayBrush },
                     new TextBlock { Text = "volume_up/down • monitor_off/on • brightness:N", FontSize = 12, Foreground = GrayBrush }
+                }
+            }
+        });
+
+        // ── MQTT Settings Card ─────────────────────────────────
+        var mqttStatusLabel = new TextBlock
+        {
+            Text = GetMqttStatusText(config),
+            FontSize = 12,
+            Foreground = GrayBrush,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 4, 0, 0)
+        };
+        _mqttStatusLabel = mqttStatusLabel;
+
+        var mqttEnableCheck = new CheckBox
+        {
+            Content = "MQTT aktivieren",
+            IsChecked = config.MqttEnabled,
+            Foreground = Brushes.White,
+            FontSize = 13
+        };
+
+        var mqttBrokerBox = new TextBox
+        {
+            Text = config.MqttBroker,
+            Watermark = "homeassistant.local",
+            FontSize = 12,
+            Margin = new Thickness(0, 2)
+        };
+        var mqttPortBox = new TextBox
+        {
+            Text = config.MqttPort.ToString(),
+            Watermark = "1883",
+            FontSize = 12,
+            Margin = new Thickness(0, 2)
+        };
+        var mqttUserBox = new TextBox
+        {
+            Text = config.MqttUsername,
+            Watermark = "Benutzername",
+            FontSize = 12,
+            Margin = new Thickness(0, 2)
+        };
+        var mqttPassBox = new TextBox
+        {
+            Text = config.MqttPassword,
+            Watermark = "Passwort",
+            FontSize = 12,
+            PasswordChar = '•',
+            Margin = new Thickness(0, 2)
+        };
+        var mqttFallbackBox = new TextBox
+        {
+            Text = config.MqttBrokerFallback,
+            Watermark = "z.B. 192.168.1.100",
+            FontSize = 12,
+            Margin = new Thickness(0, 2),
+            [ToolTip.TipProperty] = "Alternative MQTT-Broker-Adresse (z.B. lokale IP), falls die Hauptadresse nicht erreichbar ist"
+        };
+        _mqttFallbackBox = mqttFallbackBox;
+
+        var mqttSslCheck = new CheckBox
+        {
+            Content = "SSL/TLS verwenden",
+            IsChecked = config.MqttUseSsl,
+            Foreground = Brushes.White,
+            FontSize = 13
+        };
+
+        var mqttAutoBtn = new Button
+        {
+            Content = "🔧 Auto-Konfiguration",
+            [ToolTip.TipProperty] = "MQTT-Broker automatisch über HA REST API konfigurieren",
+            FontSize = 12,
+            Background = AccentBrush,
+            Foreground = Brushes.White,
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(12, 6)
+        };
+
+        var mqttTestBtn = new Button
+        {
+            Content = "🔌 Verbindung testen",
+            [ToolTip.TipProperty] = "MQTT-Verbindung mit den aktuellen Einstellungen testen",
+            FontSize = 12,
+            Background = AccentBrush,
+            Foreground = Brushes.White,
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(12, 6)
+        };
+        _btnMqttTest = mqttTestBtn;
+
+        var mqttSaveBtn = new Button
+        {
+            Content = "💾 Speichern",
+            [ToolTip.TipProperty] = "MQTT-Einstellungen speichern",
+            FontSize = 12,
+            Background = AccentBrush,
+            Foreground = Brushes.White,
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(12, 6)
+        };
+
+        // ── Wire MQTT events ────────────────────────────────────
+        mqttAutoBtn.Click += async (s, e) =>
+        {
+            mqttAutoBtn.IsEnabled = false;
+            mqttStatusLabel.Text = "⏳ Verbinde...";
+            try
+            {
+                var fallbackHost = _mqttFallbackBox?.Text?.Trim();
+                fallbackHost = string.IsNullOrEmpty(fallbackHost) ? null : fallbackHost;
+                var result = await MqttSetupHelper.AutoConfigureAsync(config.HaUrl, config.HaToken, fallbackHost);
+                if (result.Success)
+                {
+                    mqttEnableCheck.IsChecked = true;
+                    mqttBrokerBox.Text = result.BrokerHost ?? "";
+                    mqttPortBox.Text = result.BrokerPort.ToString();
+                    mqttUserBox.Text = result.Username ?? "";
+                    mqttPassBox.Text = result.Password ?? "";
+                    mqttSslCheck.IsChecked = result.UseSsl;
+                    config.MqttEnabled = true;
+                    config.MqttBroker = result.BrokerHost ?? "";
+                    config.MqttPort = result.BrokerPort;
+                    config.MqttUsername = result.Username ?? "";
+                    config.MqttPassword = result.Password ?? "";
+                    config.MqttUseSsl = result.UseSsl;
+                    config.MqttBrokerFallback = _mqttFallbackBox?.Text?.Trim() ?? "";
+                    config.MqttAutoConfigured = true;
+                    config.Save();
+                    mqttStatusLabel.Text = $"✓ MQTT konfiguriert ({result.BrokerHost}:{result.BrokerPort})";
+                }
+                else if (result.MosquittoNotInstalled)
+                    mqttStatusLabel.Text = "⚠️ Mosquitto nicht gefunden. Bitte in HA installieren.";
+                else
+                    mqttStatusLabel.Text = $"⚠️ Fehler: {result.ErrorMessage ?? "Unbekannt"}";
+            }
+            catch (Exception ex) { mqttStatusLabel.Text = $"✗ Fehler: {ex.Message}"; }
+            finally { mqttAutoBtn.IsEnabled = true; }
+        };
+
+        mqttTestBtn.Click += async (s, e) =>
+        {
+            mqttTestBtn.IsEnabled = false;
+            mqttStatusLabel.Text = "⏳ Teste MQTT-Verbindung...";
+            try
+            {
+                var broker = mqttBrokerBox.Text?.Trim() ?? "";
+                if (string.IsNullOrEmpty(broker))
+                {
+                    mqttStatusLabel.Text = "⚠️ Bitte Broker-Adresse eingeben";
+                    mqttTestBtn.IsEnabled = true;
+                    return;
+                }
+                if (!int.TryParse(mqttPortBox.Text?.Trim(), out var port) || port <= 0)
+                    port = 1883;
+                var user = string.IsNullOrEmpty(mqttUserBox.Text?.Trim()) ? null : mqttUserBox.Text.Trim();
+                var pass = string.IsNullOrEmpty(mqttPassBox.Text) ? null : mqttPassBox.Text;
+                var ssl = mqttSslCheck.IsChecked ?? false;
+                var ok = await MqttSetupHelper.TestConnectionAsync(broker, port, user, pass, ssl);
+                if (ok)
+                    mqttStatusLabel.Text = $"✓ MQTT-Verbindung erfolgreich ({broker}:{port})";
+                else
+                    mqttStatusLabel.Text = $"✗ Verbindung zu {broker}:{port} fehlgeschlagen";
+            }
+            catch (Exception ex) { mqttStatusLabel.Text = $"✗ Fehler: {ex.Message}"; }
+            finally { mqttTestBtn.IsEnabled = true; }
+        };
+
+        mqttSaveBtn.Click += (s, e) =>
+        {
+            config.MqttEnabled = mqttEnableCheck.IsChecked ?? false;
+            config.MqttBroker = mqttBrokerBox.Text?.Trim() ?? "";
+            if (int.TryParse(mqttPortBox.Text?.Trim(), out var p))
+                config.MqttPort = p;
+            config.MqttUsername = mqttUserBox.Text?.Trim() ?? "";
+            config.MqttPassword = mqttPassBox.Text ?? "";
+            config.MqttUseSsl = mqttSslCheck.IsChecked ?? false;
+            config.MqttBrokerFallback = _mqttFallbackBox?.Text?.Trim() ?? "";
+            config.MqttAutoConfigured = false;
+            config.Save();
+            mqttStatusLabel.Text = "✓ MQTT-Einstellungen gespeichert";
+        };
+
+        root.Children.Add(new Border
+        {
+            Background = PanelBrush,
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(16, 12),
+            Margin = new Thickness(16, 12, 16, 0),
+            Child = new StackPanel
+            {
+                Spacing = 6,
+                Children =
+                {
+                    new TextBlock { Text = "📡 MQTT-Einstellungen", FontWeight = FontWeight.SemiBold, FontSize = 14, Foreground = Brushes.White },
+                    mqttEnableCheck,
+                    BuildMqttGrid(mqttBrokerBox, mqttPortBox, mqttUserBox, mqttPassBox, mqttFallbackBox),
+                    mqttSslCheck,
+                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { mqttAutoBtn, mqttTestBtn, mqttSaveBtn } },
+                    mqttStatusLabel
                 }
             }
         });
@@ -400,6 +605,51 @@ public partial class MainWindow : Window
         }
         catch { }
         return result;
+    }
+
+    private static string GetMqttStatusText(Config config)
+    {
+        if (!config.MqttEnabled)
+            return "○ Deaktiviert";
+        if (!string.IsNullOrEmpty(config.MqttBroker))
+            return $"● Verbunden ({config.MqttBroker}:{config.MqttPort})";
+        return "● Getrennt";
+    }
+
+    private static Grid BuildMqttGrid(TextBox brokerBox, TextBox portBox, TextBox userBox, TextBox passBox, TextBox fallbackBox)
+    {
+        var grid = new Grid
+        {
+            ColumnDefinitions = ColumnDefinitions.Parse("120,*"),
+            RowDefinitions = RowDefinitions.Parse("Auto,Auto,Auto,Auto,Auto")
+        };
+
+        grid.Children.Add(new TextBlock { Text = "Broker:", [Grid.RowProperty] = 0, [Grid.ColumnProperty] = 0, VerticalAlignment = VerticalAlignment.Center, Foreground = GrayBrush, FontSize = 12 });
+        grid.Children.Add(brokerBox);
+        Grid.SetColumn(brokerBox, 1); Grid.SetRow(brokerBox, 0);
+        brokerBox.Margin = new Thickness(4, 2);
+
+        grid.Children.Add(new TextBlock { Text = "Port:", [Grid.RowProperty] = 1, [Grid.ColumnProperty] = 0, VerticalAlignment = VerticalAlignment.Center, Foreground = GrayBrush, FontSize = 12 });
+        grid.Children.Add(portBox);
+        Grid.SetColumn(portBox, 1); Grid.SetRow(portBox, 1);
+        portBox.Margin = new Thickness(4, 2);
+
+        grid.Children.Add(new TextBlock { Text = "Benutzername:", [Grid.RowProperty] = 2, [Grid.ColumnProperty] = 0, VerticalAlignment = VerticalAlignment.Center, Foreground = GrayBrush, FontSize = 12 });
+        grid.Children.Add(userBox);
+        Grid.SetColumn(userBox, 1); Grid.SetRow(userBox, 2);
+        userBox.Margin = new Thickness(4, 2);
+
+        grid.Children.Add(new TextBlock { Text = "Passwort:", [Grid.RowProperty] = 3, [Grid.ColumnProperty] = 0, VerticalAlignment = VerticalAlignment.Center, Foreground = GrayBrush, FontSize = 12 });
+        grid.Children.Add(passBox);
+        Grid.SetColumn(passBox, 1); Grid.SetRow(passBox, 3);
+        passBox.Margin = new Thickness(4, 2);
+
+        grid.Children.Add(new TextBlock { Text = "Fallback-Adresse:", [Grid.RowProperty] = 4, [Grid.ColumnProperty] = 0, VerticalAlignment = VerticalAlignment.Center, Foreground = GrayBrush, FontSize = 12 });
+        grid.Children.Add(fallbackBox);
+        Grid.SetColumn(fallbackBox, 1); Grid.SetRow(fallbackBox, 4);
+        fallbackBox.Margin = new Thickness(4, 2);
+
+        return grid;
     }
 }
 
