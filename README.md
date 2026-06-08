@@ -148,9 +148,9 @@ Idee: Fabian Kirchweger | Entwicklung: J.A.R.V.I.S. (Hermes Agent) – siehe [CR
 
 **Verwendete KI-Modelle:**
 
-| Modell | Rolle | Aufgaben |
-|---|---|---|
-| **GLM-5.1** | Hauptmodell | Architektur, Code, Debugging |
-| **MiniMax M3** | Sub-Agenten | Tests, Audits |
+| Modell | Rolle |
+|---|---|
+| **GLM-5.1** | Hauptmodell |
+| **DeepSeek V4 Pro** | Sub-Agenten |
 
 [English Version](README_EN.md)
