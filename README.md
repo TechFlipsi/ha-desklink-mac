@@ -144,6 +144,13 @@ GPL v3 – siehe [LICENSE](LICENSE)
 
 ## KI-Unterstützung
 
-Idee: Fabian Kirchweger | Code: GLM-5.1 (via OpenClaw) – siehe [CREDITS.md](CREDITS.md)
+Idee: Fabian Kirchweger | Entwicklung: J.A.R.V.I.S. (Hermes Agent) – siehe [CREDITS.md](CREDITS.md)
+
+**Verwendete KI-Modelle:**
+
+| Modell | Rolle | Aufgaben |
+|---|---|---|
+| **GLM-5.1** | Hauptmodell | Architektur, Code, Debugging |
+| **MiniMax M3** | Sub-Agenten | Tests, Audits |
 
 [English Version](README_EN.md)
