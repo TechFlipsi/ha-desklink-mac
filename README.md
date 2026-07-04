@@ -16,18 +16,28 @@
 
 📊 **[HASS.Agent vs. HA DeskLink](COMPARISON.md)** – Features, Architektur & Migration im Vergleich (DE + EN)
 
-⚠️ **COMMUNITY TEST VERSION – NICHT VOM ENTWICKLER GETESTET!** ⚠️
+⚠️ **macOS-VERSION WIRD AKTUELL NICHT WEITERENTWICKELT** ⚠️
 
-Diese Version wurde ohne Mac-Hardware erstellt und ist auf **Community-Testing** angewiesen.
-Bitte melde Bugs unter [Issues](https://github.com/TechFlipsi/ha-desklink-mac/issues).
+Keine Mac-Hardware verfügbar · Keine Testperson gefunden · Community-Beiträge willkommen!
+Details siehe unten — [Discord](https://discord.gg/zHPhQ7EaqH) · [Issues](https://github.com/TechFlipsi/ha-desklink-mac/issues)
 
 ---
 
-## ⚠️ WICHTIGER HINWEIS
+## ⚠️ WICHTIGER HINWEIS — macOS-Version wird aktuell nicht weiterentwickelt
 
-**Diese macOS-Version wurde NICHT vom Entwickler (Fabian Kirchweger) getestet!**
-Es gibt keine Mac-Hardware zum Testen. Die App wurde basierend auf der funktionierenden Windows-Version erstellt.
-Wenn du macOS nutzt, teste bitte diese Version und melde Bugs – **die Community ist der Tester!**
+**Die macOS-Version wird aktuell nicht weiterentwickelt.**
+
+Gründe:
+- Wir verfügen über keine Mac-Hardware zum Testen
+- Es konnte aktuell keine Testperson gefunden werden, die die Version zuverlässig testen kann
+- Ohne echte Tests können wir keine qualitativ hochwertigen Releases garantieren
+
+Die App wurde ursprünglich basierend auf der funktionierenden Windows-Version erstellt.
+Wenn du macOS nutzt und Interesse hast, die Version zu testen oder weiterzuentwickeln,
+melde dich gerne unter [Issues](https://github.com/TechFlipsi/ha-desklink-mac/issues)
+oder in unserem [Discord](https://discord.gg/zHPhQ7EaqH).
+
+Pull Requests sind willkommen — siehe [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
