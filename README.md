@@ -4,7 +4,7 @@
 [![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)
 [![License](https://img.shields.io/github/license/TechFlipsi/ha-desklink-mac?label=License)](https://github.com/TechFlipsi/ha-desklink-mac/LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/TechFlipsi/ha-desklink-mac/total?label=Downloads)](https://github.com/TechFlipsi/ha-desklink-mac/releases)
-[![Discord](https://img.shields.io/discord/1496261911677894867?label=Discord)](https://discord.gg/7G2SqpXpsC)
+[![Discord](https://img.shields.io/discord/1496261911677894867?label=Discord)](https://discord.gg/zHPhQ7EaqH)
 
 **Home Assistant Companion App für macOS**
 
