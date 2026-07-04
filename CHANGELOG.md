@@ -63,7 +63,7 @@
 ## [v3.0.2] - 2026-05-12
 - 🔒 **Login-Retry-Limit:** Nach 3 fehlgeschlagenen Token-Logins wird die Verbindung gestoppt (verhindert HA IP-Ban)
 - 🔄 **Retry-Button:** Manuelles Neuverbinden nach Token-Korrektur über Einstellungen
-- 🔗 **Discord-Link aktualisiert:** Neuer Server-Invite-Link (discord.gg/7G2SqpXpsC)
+- 🔗 **Discord-Link aktualisiert:** Neuer Server-Invite-Link (discord.gg/zHPhQ7EaqH)
 
 ## [v3.0.7] - 2026-04-22
 - 📖 **Doku aktualisiert:** README_EN komplett auf v3.0-Stand gebracht
