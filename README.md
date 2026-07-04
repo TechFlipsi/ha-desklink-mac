@@ -1,4 +1,4 @@
-# HA DeskLink macOS v4.3
+# HA DeskLink macOS v4.4.2
 
 [![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
 [![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)
@@ -41,9 +41,9 @@ Pull Requests sind willkommen — siehe [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## MQTT (v4.3)
+## MQTT (v4.4.2)
 
-HA DeskLink v4.3 bringt **optionale MQTT-Unterstützung** für erweiterte Features:
+HA DeskLink v4.4.2 bringt **optionale MQTT-Unterstützung** für erweiterte Features:
 
 - 🔊 **Media Player Entity** – Dein Mac erscheint als Media Player in Home Assistant mit now-playing Info, Play/Pause und Lautstärke-Regelung
 - 📡 **PC Status Binary Sensor** – Sofortige Online/Offline-Erkennung via Last Will Testament (LWT)
