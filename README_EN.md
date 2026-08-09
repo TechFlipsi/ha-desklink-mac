@@ -1,4 +1,4 @@
-# HA DeskLink macOS v4.4.2
+# HA DeskLink macOS v5.0.0
 
 [![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
 [![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)
@@ -34,9 +34,9 @@ Please report bugs at [Issues](https://github.com/TechFlipsi/ha-desklink-mac/iss
 - 🔄 **Auto-Update** – checks for updates on startup
 - 🍎 **macOS-exclusive Sensors** – Battery cycle count, Power adapter, Keyboard backlight, GPU model, Display resolution
 
-## MQTT (v4.4.2)
+## MQTT (v5.0.0)
 
-HA DeskLink v4.4.2 brings **optional MQTT support** for advanced features:
+HA DeskLink v5.0.0 brings **optional MQTT support** for advanced features:
 
 - 🔊 **Media Player Entity** – Your Mac appears as a Media Player in Home Assistant with now-playing info, play/pause and volume control
 - 📡 **PC Status Binary Sensor** – Instant online/offline detection via Last Will Testament (LWT)
@@ -121,6 +121,6 @@ Starting from v2.2.1, each platform has **independent version numbers**:
 GPL v3 – see [LICENSE](LICENSE)
 
 ## Attribution
-Idea: Fabian Kirchweger | Code: GLM-5.1 (via OpenClaw) – see [CREDITS.md](CREDITS.md)
+Idea: Fabian Kirchweger | Code: GLM-5.2 (via J.A.R.V.I.S. / Hermes Agent) – see [CREDITS.md](CREDITS.md)
 
 [Deutsch](README.md)

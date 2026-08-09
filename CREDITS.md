@@ -10,7 +10,7 @@
 
 | Modell | Rolle |
 |---|---|
-| **GLM-5.1** | Hauptmodell |
+| **GLM-5.2** | Hauptmodell |
 | **DeepSeek V4 Pro** | Sub-Agenten |
 
 ## Lizenz
