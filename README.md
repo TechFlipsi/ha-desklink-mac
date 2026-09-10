@@ -10,6 +10,16 @@
 
 > 🔍 **Suchst du einen Home Assistant Desktop-Companion für macOS?** HA DeskLink verbindet deinen Mac direkt mit Home Assistant – Sensordaten, Systemstatus und Steuerelemente live auf dem Desktop.
 
+> 🌍 **English:** HA DeskLink connects your Mac directly to Home Assistant – sensor data, system status and controls live on your desktop.
+
+## ⬇️ Download
+
+**[⬇️ Download HA DeskLink for macOS (.zip)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)** — Apple Silicon (ARM64) & Intel (x64)
+
+⚠️ v4.4.2 ist der letzte Release – das Projekt ruht aktuell (keine Mac-Hardware zum Testen). Community-Beiträge sind willkommen!
+
+Alle Versionen: [Releases](https://github.com/TechFlipsi/ha-desklink-mac/releases)
+
 <!-- SEO: home assistant macos desktop app, home assistant mac companion, hass macos, home assistant sensor monitor mac, smart home mac widget -->
 
 📖 **[Betriebsanleitung / Manual](MANUAL.md)** – Installation, Sensoren, Befehle, Quick Actions, Actionable Notifications, Screenshot, Webcam, Plattform-Vergleich & mehr (DE + EN)
