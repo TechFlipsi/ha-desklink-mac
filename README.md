@@ -1,5 +1,8 @@
 # HA DeskLink macOS v5.0.0
 
+
+> **What is HA DeskLink?** A free, open-source desktop application (GPL-3.0) that connects a computer to a Home Assistant instance in both directions: smart-home sensor values shown live in the tray and the computer's status pushed into Home Assistant. Development currently paused at v4.4.2 — resumes when more macOS users and testers join. Fully local, no browser, no cloud.
+
 🌐 **[Project homepage & downloads](https://techflipsi.github.io/ha-desklink/)**
 
 [![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
