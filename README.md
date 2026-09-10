@@ -1,5 +1,7 @@
 # HA DeskLink macOS v5.0.0
 
+🌐 **[Project homepage & downloads](https://techflipsi.github.io/ha-desklink/)**
+
 [![Build](https://img.shields.io/github/actions/workflow/status/TechFlipsi/ha-desklink-mac/build.yml?branch=main&label=Build)](https://github.com/TechFlipsi/ha-desklink-mac/actions)
 [![Version](https://img.shields.io/github/v/release/TechFlipsi/ha-desklink-mac?label=Version)](https://github.com/TechFlipsi/ha-desklink-mac/releases/latest)
 [![License](https://img.shields.io/github/license/TechFlipsi/ha-desklink-mac?label=License)](https://github.com/TechFlipsi/ha-desklink-mac/LICENSE)
